@@ -1,0 +1,22 @@
+\documentclass{article}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{luatexbase}
+\usepackage[rivers]{impnattypo}
+\usepackage{microtype}
+%\input luatexbase.sty
+\directlua{%
+local linebreaker = require "linebreaker"
+luatexbase.add_to_callback("linebreak_filter", linebreaker.linebreak, "new linebreak callback")
+%luatexbase.add_to_callback("post_linebreak_filter", linebreaker.traverse, "xxx")
+}
+
+\begin{document}
+\hsize=150pt
+The example document given below creates two pages by using Lua code alone. You will learn how to access TeX's boxes and counters from the Lua side, shipout a page into the PDF file, create horizontal and vertical boxes (hbox and vbox), create new nodes and manipulate the nodes links structure. The example covers the following node types: rule, whatsit, vlist, hlist and action.
+
+In the example code we use black squares as the contents of the pages and not normal text, because character handling takes more code and will be covered later on.
+
+Save the following file into myprogram.lua and use the TeX stub from above (or get the source here). 
+
+\end{document}
