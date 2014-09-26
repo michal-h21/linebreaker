@@ -5,8 +5,16 @@ linebreaker.max_tolerance = 9999
 -- line breaking function is customizable
 linebreaker.breaker = tex.linebreak -- linebreak function
 linebreaker.max_cycles = 30 -- max # of attempts to find best solution
--- the number is totally arbitrary
+														-- the number is totally arbitrary
 
+linebreaker.boxsize = 65536 -- default box size is 1pt. 
+														-- value is in scaled points
+linebreaker.vertical_point = tex.baselineskip.width -- vertical matrix
+linebreaker.previous_points = linebreaker.vertical_point / linebreaker.boxsize
+														-- number of
+ 														-- points which will be taken into account in 
+														-- calculating river value. these points will
+														-- be processed in both directions
 -- return array with default parameters
 function linebreaker.parameters()
 	return {}--{emergencystretch=tex.sp(".5em")}
@@ -137,6 +145,137 @@ local function calc_tolerance(previous)
 	return (new < max_tolerance) and new or max_tolerance
 end
 
+-- river detection 
+-- idea is following:
+-- 1. count widths of words and spaces 
+-- 2. divide widths to segments of some width (1pt?)
+-- 3. assign number to segments: full glyph in the midle of a word:0
+-- 						full glue: 1
+-- 						edges of words: fraction depending on glyph dimensions
+-- 							(it would be nice to incorporate glyph shapes, but it is 
+-- 							unrealistic, we don't have access)
+-- 4. add numbers from previous line, probably sum of segments in some 
+-- 			distance (baselineskip / segments per sp = 45°?)
+-- 5. sum segments for a glue / glue width = river ratio?
+-- 6. find right threshold for telling which value of river ratio is a real
+--    river
+-- 7. calculate river ratio for whole paragraph (sum of over threshold 
+-- 		river ratios?)
+-- I am not a mathematician, so I don't know whether this method is accurate,
+-- 		correct, or efficient, 
+--
+--
+function linebreaker.detect_rivers(head)
+	local lines = {} -- 
+	local boxsize = linebreaker.boxsize
+	local vertical_point = linebreaker.vertical_point
+	local previous_points = math.ceil(linebreaker.previous_points)
+	local calc_river = function(line, lines)
+    -- get previous line
+		local previous = lines and lines[#lines] or {}
+		local get_point = function(i)
+			return previous[i] or 0
+		end
+		for i = 1, #line do
+			local v = line[i]
+			if v > 0 then
+				v = v + get_point(i)
+				-- ve add values from previous line
+				for c = 1, previous_points do
+					v = v + (get_point(i+c)/i) + (get_point(i-c)/i)
+					--print("adding",v)
+				end
+				line[i] = v
+			end
+			print("Calculate for", i,v)
+		end
+		return line
+	end
+	for n in node.traverse_id(0, head) do
+		local t = {}
+		-- glue parameters
+		local set = n.glue_set
+		local sign = n.glue_sign
+		local order =  n.glue_order
+		local first_node = n.head
+		local first_glyph = nil
+		local first = true
+		local last_glyph = nil
+		local last_glue = n.head
+		local position = 0
+		local remain = 0
+		local get_glyph_black =  function(glyph)
+			-- only calculate blackness for glyphs
+			if glyph.id == 37 then
+				local w,h,d = node.dimensions(glyph, glyph.next)
+				-- 1 is maximal white
+				local blackness = 1 - ((h+d) / vertical_point)
+				print(char(glyph.char), blackness)
+        return w / boxsize or 0, blackness
+			end
+			return 0,0
+		end
+		-- get width of nodes
+		local get_width = function(start,fin)
+			local w = node.dimensions(set,sign,order,start, fin) 
+			return w / boxsize -- get width in pt
+		end
+		local add_word = function(start,fin)
+			local width = get_width(start,fin)
+			-- first and last glyph are taken into account for blackness calculation
+			local w1, f = get_glyph_black(first_glyph) 
+			local w2, l = get_glyph_black(last_glyph)
+			w1 = math.ceil(w1 + remain)
+			w2 = math.ceil(w2)
+			width = width + remain
+			remain = width - math.floor(width)
+			width = width - remain
+			for i=1, w1 do
+				t[#t+1] = f/i -- add more black at the end of glyph
+			end
+			-- middle of the word
+			for i=1, (width-w1-w2) do
+				t[#t+1] = 0
+			end
+			-- last glyph
+			for i=1, w2 do
+				t[#t+1] = l/(w2-i+1)
+			end
+			--print("black", f,l)
+		end
+		add_glue = function(x)
+			local width = get_width(x,x.next) + remain
+			remain = width - math.floor(width)
+			width = width - remain
+			for i=1, width do
+				t[#t+1] = 1
+			end
+		end
+		for x in node.traverse(n.head) do
+			if x.id == 10 and x.subtype == 0 then
+				--print("glue width", get_width(x,x.next))
+				add_word(last_glue, x, first_glyph,last_glyph)
+				add_glue(x)
+				first = true
+				last_glue = x.next -- calculate width of next word from here
+			elseif x.id == 37 then
+				if first then
+					first_glyph = x
+				end
+				first = false
+				last_glyph = x
+			end
+		end
+		add_word(last_glue, x, first_glyph, last_glyph)
+		table.insert(lines, calc_river(t,lines))
+		print(table.concat(lines[#lines],","))
+		-- local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
+		-- print(width,table.concat(t))
+	end
+	return 0
+end
+
+
 
 function linebreaker.best_solution(par, parameters)
 	-- save current node list, because call to the linebreaker modifies it
@@ -168,6 +307,9 @@ function linebreaker.best_solution(par, parameters)
 		-- run linebreaker again
 		return linebreaker.best_solution(par, parameters)
 	end
+	-- detect rivers only for paragraphs without overflow boxes
+	local rivers = linebreaker.detect_rivers(newhead)
+	print("rivers", rivers)
 	print "normal return"
 	--]]
 	return newhead, info
@@ -180,6 +322,7 @@ local function glue_width(head)
 		local t = {}
 		local set = n.glue_set
 		local sign = n.glue_sign
+		local order =  n.glue_order
 		for x in node.traverse(n.head) do
 			if x.id == 10 then
 				local g = x.spec
@@ -189,7 +332,8 @@ local function glue_width(head)
 				t[#t+1] = char(x.char)
 			end
 		end
-		print(table.concat(t))
+		local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
+		print(width,table.concat(t))
 	end
 end
 
