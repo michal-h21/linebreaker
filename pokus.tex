@@ -1,6 +1,7 @@
 \input luatexbase.sty
 \directlua{%
 local linebreaker = require "linebreaker"
+linebreaker.max_cycles = 90
 luatexbase.add_to_callback("linebreak_filter", linebreaker.linebreak, "new linebreak callback")
 %luatexbase.add_to_callback("post_linebreak_filter", linebreaker.traverse, "xxx")
 }
@@ -12,6 +13,6 @@ In the example code we use black squares as the contents of the pages and not no
 
 Save the following file into myprogram.lua and use the TeX stub from above (or get the source here). 
 
- sdahfjhasjfdhksdafdsfasfjhasjhfasdfhjhsdahh
+% sdahfjhasjfdhksdafdsfasfjhasjhfasdfhjhsdahh
 
 \bye
