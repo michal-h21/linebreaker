@@ -181,10 +181,11 @@ function linebreaker.detect_rivers(head)
 			if v > 0 then
 				v = v + get_point(i)
 				-- ve add values from previous line
-				for c = 1, previous_points do
+				--for c = 1, previous_points do
+				  local c = previous_points
 					v = v + (get_point(i+c)/i) + (get_point(i-c)/i)
 					--print("adding",v)
-				end
+				--end
 				line[i] = v
 			end
 			print("Calculate for", i,v)
@@ -200,6 +201,7 @@ function linebreaker.detect_rivers(head)
 		local first_node = n.head
 		local first_glyph = nil
 		local first = true
+		local word_count = 0
 		local last_glyph = nil
 		local last_glue = n.head
 		local position = 0
@@ -227,6 +229,9 @@ function linebreaker.detect_rivers(head)
 			local w2, l = get_glyph_black(last_glyph)
 			w1 = math.ceil(w1 + remain)
 			w2 = math.ceil(w2)
+			if word_count < 1 then
+							w1 = 0
+			end
 			width = width + remain
 			remain = width - math.floor(width)
 			width = width - remain
@@ -252,7 +257,7 @@ function linebreaker.detect_rivers(head)
 			end
 		end
 		for x in node.traverse(n.head) do
-			if x.id == 10 and x.subtype == 0 then
+			if x.id == 10 and x.subtype == 0 and word_count > 0 then
 				--print("glue width", get_width(x,x.next))
 				add_word(last_glue, x, first_glyph,last_glyph)
 				add_glue(x)
@@ -262,6 +267,7 @@ function linebreaker.detect_rivers(head)
 				if first then
 					first_glyph = x
 				end
+				word_count = word_count + 1
 				first = false
 				last_glyph = x
 			end
