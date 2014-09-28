@@ -170,30 +170,36 @@ function linebreaker.detect_rivers(head)
 	local boxsize = linebreaker.boxsize
 	local vertical_point = linebreaker.vertical_point
 	local previous_points = math.ceil(linebreaker.previous_points)
-	local calc_river = function(line, lines)
+	-- calculate river for current node `n` and insert values to 
+	local calc_river = function(line,n, lines)
     -- get previous line
 		local previous = lines and lines[#lines] or {}
 		local get_point = function(i)
 			return previous[i] or 0
 		end
-		for i = 1, #line do
-			local v = line[i]
+		local x = #line
+		--print("soucasna delka line", x)
+		local sum = 0
+		for i = 1, #n do
+			local v = n[i] or 0
 			if v > 0 then
 				v = v + get_point(i)
 				-- ve add values from previous line
 				--for c = 1, previous_points do
 				  local c = previous_points
-					v = v + (get_point(i+c)/i) + (get_point(i-c)/i)
+					v = v + (get_point(i+x+c)) + (get_point(i+x-c))
 					--print("adding",v)
 				--end
-				line[i] = v
 			end
-			print("Calculate for", i,v)
+			line[i+x] = v
+			sum = sum + v
+			--print("Calculate for", i,v)
+			--print("celkem v", i+x,v)
 		end
-		return line
+		return line, sum / #n
 	end
 	for n in node.traverse_id(0, head) do
-		local t = {}
+		local line = {}
 		-- glue parameters
 		local set = n.glue_set
 		local sign = n.glue_sign
@@ -223,13 +229,15 @@ function linebreaker.detect_rivers(head)
 			return w / boxsize -- get width in pt
 		end
 		local add_word = function(start,fin)
+			word_count = word_count + 1
+      local t = {}
 			local width = get_width(start,fin)
 			-- first and last glyph are taken into account for blackness calculation
 			local w1, f = get_glyph_black(first_glyph) 
 			local w2, l = get_glyph_black(last_glyph)
 			w1 = math.ceil(w1 + remain)
 			w2 = math.ceil(w2)
-			if word_count < 1 then
+			if word_count <= 1 then
 							w1 = 0
 			end
 			width = width + remain
@@ -246,34 +254,49 @@ function linebreaker.detect_rivers(head)
 			for i=1, w2 do
 				t[#t+1] = l/(w2-i+1)
 			end
+      line = calc_river(line, t, lines)
 			--print("black", f,l)
 		end
 		add_glue = function(x)
+      local t = {}
+			local r
 			local width = get_width(x,x.next) + remain
 			remain = width - math.floor(width)
 			width = width - remain
 			for i=1, width do
 				t[#t+1] = 1
 			end
+			--print("glue",#t)
+			line, r  = calc_river(line,t, lines)
+			if r > 1 then
+		 	  local w = node.new("whatsit","pdf_literal")                                                                             
+			  local color = 1 / r
+			  w.data = string.format("q 1 %f 1 rg 0 0 m 0 5 l 5 5 l 5 0 l f Q", color)
+				print("color",w.data)
+			  node.insert_before(n.head,x,w)
+      end
+			return r
 		end
 		for x in node.traverse(n.head) do
-			if x.id == 10 and x.subtype == 0 and word_count > 0 then
+			if x.id == 10 and x.subtype == 0 then
 				--print("glue width", get_width(x,x.next))
 				add_word(last_glue, x, first_glyph,last_glyph)
-				add_glue(x)
+				local river_value = add_glue(x)
+				print("riverness", river_value)
 				first = true
 				last_glue = x.next -- calculate width of next word from here
 			elseif x.id == 37 then
 				if first then
 					first_glyph = x
 				end
-				word_count = word_count + 1
 				first = false
 				last_glyph = x
 			end
 		end
 		add_word(last_glue, x, first_glyph, last_glyph)
-		table.insert(lines, calc_river(t,lines))
+		--table.insert(lines, calc_river(t,lines))
+		--for k,v in pairs(line) do print(k,v) end 
+		table.insert(lines,line)
 		print(table.concat(lines[#lines],","))
 		-- local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
 		-- print(width,table.concat(t))
