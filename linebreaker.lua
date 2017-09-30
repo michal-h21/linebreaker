@@ -1,5 +1,10 @@
 local linebreaker = {}
 
+local hlist_id = node.id "hlist"
+local glyph_id = node.id "glyph"
+local glue_id = node.id "glue"
+
+
 -- max allowed value of tolerance
 linebreaker.max_tolerance = 9999
 -- line breaking function is customizable
@@ -74,7 +79,6 @@ end
 
 
 local char = unicode.utf8.char
-local glyph_id = node.id("glyph")
 
 -- get text content of node list
 local function get_text(line)
@@ -214,7 +218,7 @@ function linebreaker.detect_rivers(head)
 		local remain = 0
 		local get_glyph_black =  function(glyph)
 			-- only calculate blackness for glyphs
-			if glyph.id == 37 then
+			if glyph.id == glyph_id then
 				local w,h,d = node.dimensions(glyph, glyph.next)
 				-- 1 is maximal white
 				local blackness = 1 - ((h+d) / vertical_point)
@@ -278,14 +282,14 @@ function linebreaker.detect_rivers(head)
 			return r
 		end
 		for x in node.traverse(n.head) do
-			if x.id == 10 and x.subtype == 0 then
+			if x.id == glue_id and x.subtype == 0 then
 				--print("glue width", get_width(x,x.next))
 				add_word(last_glue, x, first_glyph,last_glyph)
 				local river_value = add_glue(x)
 				print("riverness", river_value)
 				first = true
 				last_glue = x.next -- calculate width of next word from here
-			elseif x.id == 37 then
+			elseif x.id == glyph_id then
 				if first then
 					first_glyph = x
 				end
@@ -347,17 +351,17 @@ end
 -- this is just reporting function which print lines with glue widths.
 -- this may be useful in river detection
 local function glue_width(head)
-	for n in node.traverse_id(0, head) do
+	for n in node.traverse_id(hlist_id, head) do
 		local t = {}
 		local set = n.glue_set
 		local sign = n.glue_sign
 		local order =  n.glue_order
 		for x in node.traverse(n.head) do
-			if x.id == 10 then
+			if x.id == glue_id then
 				local g = x.spec
 				local size = glue_calc(x, sign, set)
 				t[#t+1] = ":"..size.."."
-			elseif x.id == 37 then
+			elseif x.id == glyph_id then
 				t[#t+1] = char(x.char)
 			end
 		end
