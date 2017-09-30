@@ -1,3 +1,4 @@
+\ifdefined\ignorelinebreker\else
 \input luatexbase.sty
 \directlua{%
 local linebreaker = require "linebreaker"
@@ -5,7 +6,12 @@ linebreaker.max_cycles = 90
 luatexbase.add_to_callback("linebreak_filter", linebreaker.linebreak, "new linebreak callback")
 %luatexbase.add_to_callback("post_linebreak_filter", linebreaker.traverse, "xxx")
 }
+\fi
 
+\pagewidth = 180pt
+\pageheight = 320pt
+\hoffset=-\dimexpr 1in- 15pt\relax
+\voffset=-\dimexpr 1in- 15pt\relax
 \hsize=150pt
 The example document given below creates two pages by using Lua code alone. You will learn how to access TeX's boxes and counters from the Lua side, shipout a page into the PDF file, create horizontal and vertical boxes (hbox and vbox), create new nodes and manipulate the nodes links structure. The example covers the following node types: rule, whatsit, vlist, hlist and action.
 
