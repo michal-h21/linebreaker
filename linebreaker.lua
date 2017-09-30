@@ -95,7 +95,7 @@ end
 function linebreaker.par_badness(head)
 	local n = 0
 	for line in node.traverse_id(0, head) do
-		print(get_text(line.head), line.glue_order, line.glue_sign, line.glue_set)
+		-- print(get_text(line.head), line.glue_order, line.glue_sign, line.glue_set)
 		-- glue_sign: > 0 = normal, 1 = stretch,  2 = shrink
 		-- we count only shrink, but stretch may result in overfull box as well
 		-- I just don't know, how to detect which value of glue_set means error
@@ -218,12 +218,11 @@ function linebreaker.detect_rivers(head)
 		local remain = 0
 		local get_glyph_black =  function(glyph)
 			-- only calculate blackness for glyphs
-			if glyph.id == glyph_id then
+			if glyph and glyph.id == glyph_id then
 				local w,h,d = node.dimensions(glyph, glyph.next)
 				-- 1 is maximal white
 				local blackness = 1 - ((h+d) / vertical_point)
-				print(char(glyph.char), blackness)
-        return w / boxsize or 0, blackness
+				-- print(char(glyph.char), blackness) return w / boxsize or 0, blackness
 			end
 			return 0,0
 		end
@@ -276,7 +275,7 @@ function linebreaker.detect_rivers(head)
 		 	  local w = node.new("whatsit","pdf_literal")                                                                             
 			  local color = 1 / r
 			  w.data = string.format("q 1 %f 1 rg 0 0 m 0 5 l 5 5 l 5 0 l f Q", color)
-				print("color",w.data)
+				-- print("color",w.data)
 			  node.insert_before(n.head,x,w)
       end
 			return r
@@ -286,7 +285,7 @@ function linebreaker.detect_rivers(head)
 				--print("glue width", get_width(x,x.next))
 				add_word(last_glue, x, first_glyph,last_glyph)
 				local river_value = add_glue(x)
-				print("riverness", river_value)
+				-- print("riverness", river_value)
 				first = true
 				last_glue = x.next -- calculate width of next word from here
 			elseif x.id == glyph_id then
@@ -301,7 +300,7 @@ function linebreaker.detect_rivers(head)
 		--table.insert(lines, calc_river(t,lines))
 		--for k,v in pairs(line) do print(k,v) end 
 		table.insert(lines,line)
-		print(table.concat(lines[#lines],","))
+		-- print(table.concat(lines[#lines],","))
 		-- local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
 		-- print(width,table.concat(t))
 	end
@@ -316,7 +315,7 @@ function linebreaker.best_solution(par, parameters)
 	local head = node.copy_list(par)
 	-- this shouldn't happen
 	if #parameters > linebreaker.max_cycles then
-		print "max cycles found"
+		-- print "max cycles found"
 		return linebreaker.breaker(head,find_best(parameters))
 	end
 	local params = parameters[#parameters]	-- newest parameters are last in the
@@ -327,23 +326,23 @@ function linebreaker.best_solution(par, parameters)
 	-- calc badness
 	local badness = linebreaker.par_badness(newhead)
 	params.badness =  badness
-	print("badness", badness, tex.hfuzz, tex.tolerance)
+	-- print("badness", badness, tex.hfuzz, tex.tolerance)
 	-- [[
 	if badness > 0 then
 		-- calc new value of tolerance
 		local tolerance = calc_tolerance(params.tolerance) -- or 10000 
-		print("tolerance", tolerance)
+		-- print("tolerance", tolerance)
 		-- save tolerance to newparams so this value will be used in next run
 		newparams.tolerance = tolerance 
 		table.insert(parameters, newparams)
-		print("high badness", badness)
+		-- print("high badness", badness)
 		-- run linebreaker again
 		return linebreaker.best_solution(par, parameters)
 	end
 	-- detect rivers only for paragraphs without overflow boxes
 	local rivers = linebreaker.detect_rivers(newhead)
-	print("rivers", rivers)
-	print "normal return"
+	-- print("rivers", rivers)
+	-- print "normal return"
 	--]]
 	return newhead, info
 end
@@ -366,7 +365,7 @@ local function glue_width(head)
 			end
 		end
 		local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
-		print(width,table.concat(t))
+		-- print(width,table.concat(t))
 	end
 end
 
