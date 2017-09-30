@@ -374,7 +374,7 @@ function linebreaker.linebreak(head,is_display)
 	local parameters = linebreaker.parameters()
 	local newhead, info = linebreaker.best_solution(head, {parameters}) 
 	--print(tex.tolerance,tex.looseness, tex.adjdemerits, info.looseness, info.demerits)
-	glue_width(newhead)
+	-- glue_width(newhead)
 	tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
 	tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
 	--return linebreaker.traverse(add_parskip(newhead))
