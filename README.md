@@ -21,3 +21,16 @@ moment, overflow box detection works somehow, river detection is a proof of
 concept and it needs further corrections.
 
 ## Usage
+
+
+     \usepackage{linebreaker}
+
+
+## Example
+
+<table>
+<tr>
+<td><img src="plain.png" /></td>
+<td><img src="plain-linebreak.png" /></td>
+</tr>
+</table>
