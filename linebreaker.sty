@@ -1,0 +1,11 @@
+\ProvidesPackage{linebreaker}
+
+\RequirePackage{luatexbase}
+\directlua{%
+local linebreaker = require "linebreaker"
+linebreaker.max_cycles = 90
+luatexbase.add_to_callback("linebreak_filter", linebreaker.linebreak, "new linebreak callback")
+%luatexbase.add_to_callback("post_linebreak_filter", linebreaker.traverse, "xxx")
+}
+
+\endinput
