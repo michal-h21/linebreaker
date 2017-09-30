@@ -33,4 +33,5 @@ concept and it needs further corrections.
 <td><img src="plain.png" /></td>
 <td><img src="plain-linebreak.png" /></td>
 </tr>
+<tr><td>Without `linebreaker`</td><td>With `linebreaker`</td></tr>
 </table>
