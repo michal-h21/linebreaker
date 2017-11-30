@@ -20,6 +20,9 @@ linebreaker.previous_points = linebreaker.vertical_point / linebreaker.boxsize
  														-- points which will be taken into account in 
 														-- calculating river value. these points will
 														-- be processed in both directions
+-- factor which will multiply the parindent value to get the minimal allowed width
+-- of a last line in a paragraph
+linebreaker.width_factor = 1.5
 -- return array with default parameters
 function linebreaker.parameters()
 	return {}--{emergencystretch=tex.sp(".5em")}
@@ -129,13 +132,14 @@ end
 -- width depends on line shrink and stretch
 -- this will be used in river detection
 local function glue_calc(n, sign,set)
- 	-- function for calculating glue width
- 	if sign ==2 then
- 		size=n.spec.width - n.spec.shrink*set
- 	else
- 		size=n.spec.width + n.spec.stretch*set
- 	end
-	return size
+  -- function for calculating glue width
+  local size
+  if sign ==2 then
+    size=n.spec.width - n.spec.shrink*set
+  else
+    size=n.spec.width + n.spec.stretch*set
+  end
+  return size
 end
 
 
@@ -170,214 +174,243 @@ end
 --
 --
 function linebreaker.detect_rivers(head)
-	local lines = {} -- 
-	local boxsize = linebreaker.boxsize
-	local vertical_point = linebreaker.vertical_point
-	local previous_points = math.ceil(linebreaker.previous_points)
-	-- calculate river for current node `n` and insert values to 
-	local calc_river = function(line,n, lines)
+  local lines = {} -- 
+  local boxsize = linebreaker.boxsize
+  local vertical_point = linebreaker.vertical_point
+  local previous_points = math.ceil(linebreaker.previous_points)
+  -- calculate river for current node `n` and insert values to 
+  local calc_river = function(line,n, lines)
     -- get previous line
-		local previous = lines and lines[#lines] or {}
-		local get_point = function(i)
-			return previous[i] or 0
-		end
-		local x = #line
-		--print("soucasna delka line", x)
-		local sum = 0
-		for i = 1, #n do
-			local v = n[i] or 0
-			if v > 0 then
-				v = v + get_point(i)
-				-- ve add values from previous line
-				--for c = 1, previous_points do
-				  local c = previous_points
-					v = v + (get_point(i+x+c)) + (get_point(i+x-c))
-					--print("adding",v)
-				--end
-			end
-			line[i+x] = v
-			sum = sum + v
-			--print("Calculate for", i,v)
-			--print("celkem v", i+x,v)
-		end
-		return line, sum / #n
-	end
-	for n in node.traverse_id(0, head) do
-		local line = {}
-		-- glue parameters
-		local set = n.glue_set
-		local sign = n.glue_sign
-		local order =  n.glue_order
-		local first_node = n.head
-		local first_glyph = nil
-		local first = true
-		local word_count = 0
-		local last_glyph = nil
-		local last_glue = n.head
-		local position = 0
-		local remain = 0
-		local get_glyph_black =  function(glyph)
-			-- only calculate blackness for glyphs
-			if glyph and glyph.id == glyph_id then
-				local w,h,d = node.dimensions(glyph, glyph.next)
-				-- 1 is maximal white
-				local blackness = 1 - ((h+d) / vertical_point)
-				-- print(char(glyph.char), blackness) return w / boxsize or 0, blackness
-			end
-			return 0,0
-		end
-		-- get width of nodes
-		local get_width = function(start,fin)
-			local w = node.dimensions(set,sign,order,start, fin) 
-			return w / boxsize -- get width in pt
-		end
-		local add_word = function(start,fin)
-			word_count = word_count + 1
-      local t = {}
-			local width = get_width(start,fin)
-			-- first and last glyph are taken into account for blackness calculation
-			local w1, f = get_glyph_black(first_glyph) 
-			local w2, l = get_glyph_black(last_glyph)
-			w1 = math.ceil(w1 + remain)
-			w2 = math.ceil(w2)
-			if word_count <= 1 then
-							w1 = 0
-			end
-			width = width + remain
-			remain = width - math.floor(width)
-			width = width - remain
-			for i=1, w1 do
-				t[#t+1] = f/i -- add more black at the end of glyph
-			end
-			-- middle of the word
-			for i=1, (width-w1-w2) do
-				t[#t+1] = 0
-			end
-			-- last glyph
-			for i=1, w2 do
-				t[#t+1] = l/(w2-i+1)
-			end
-      line = calc_river(line, t, lines)
-			--print("black", f,l)
-		end
-		add_glue = function(x)
-      local t = {}
-			local r
-			local width = get_width(x,x.next) + remain
-			remain = width - math.floor(width)
-			width = width - remain
-			for i=1, width do
-				t[#t+1] = 1
-			end
-			--print("glue",#t)
-			line, r  = calc_river(line,t, lines)
-			if r > 1 then
-		 	  local w = node.new("whatsit","pdf_literal")                                                                             
-			  local color = 1 / r
-			  w.data = string.format("q 1 %f 1 rg 0 0 m 0 5 l 5 5 l 5 0 l f Q", color)
-				-- print("color",w.data)
-			  node.insert_before(n.head,x,w)
+    local previous = lines and lines[#lines] or {}
+    local get_point = function(i)
+      return previous[i] or 0
+    end
+    local x = #line
+    --print("soucasna delka line", x)
+    local sum = 0
+    for i = 1, #n do
+      local v = n[i] or 0
+      if v > 0 then
+        v = v + get_point(i)
+        -- ve add values from previous line
+        --for c = 1, previous_points do
+        local c = previous_points
+        v = v + (get_point(i+x+c)) + (get_point(i+x-c))
+        --print("adding",v)
+        --end
       end
-			return r
-		end
-		for x in node.traverse(n.head) do
-			if x.id == glue_id and x.subtype == 0 then
-				--print("glue width", get_width(x,x.next))
-				add_word(last_glue, x, first_glyph,last_glyph)
-				local river_value = add_glue(x)
-				-- print("riverness", river_value)
-				first = true
-				last_glue = x.next -- calculate width of next word from here
-			elseif x.id == glyph_id then
-				if first then
-					first_glyph = x
-				end
-				first = false
-				last_glyph = x
-			end
-		end
-		add_word(last_glue, x, first_glyph, last_glyph)
-		--table.insert(lines, calc_river(t,lines))
-		--for k,v in pairs(line) do print(k,v) end 
-		table.insert(lines,line)
-		-- print(table.concat(lines[#lines],","))
-		-- local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
-		-- print(width,table.concat(t))
-	end
-	return 0
+      line[i+x] = v
+      sum = sum + v
+      --print("Calculate for", i,v)
+      --print("celkem v", i+x,v)
+    end
+    return line, sum / #n
+  end
+  for n in node.traverse_id(0, head) do
+    local line = {}
+    -- glue parameters
+    local set = n.glue_set
+    local sign = n.glue_sign
+    local order =  n.glue_order
+    local first_node = n.head
+    local first_glyph = nil
+    local first = true
+    local word_count = 0
+    local last_glyph = nil
+    local last_glue = n.head
+    local position = 0
+    local remain = 0
+    local get_glyph_black =  function(glyph)
+      -- only calculate blackness for glyphs
+      if glyph and glyph.id == glyph_id then
+        local w,h,d = node.dimensions(glyph, glyph.next)
+        -- 1 is maximal white
+        local blackness = 1 - ((h+d) / vertical_point)
+        -- print(char(glyph.char), blackness) return w / boxsize or 0, blackness
+      end
+      return 0,0
+    end
+    -- get width of nodes
+    local get_width = function(start,fin)
+      local w = node.dimensions(set,sign,order,start, fin) 
+      return w / boxsize -- get width in pt
+    end
+    local add_word = function(start,fin)
+      word_count = word_count + 1
+      local t = {}
+      local width = get_width(start,fin)
+      -- first and last glyph are taken into account for blackness calculation
+      local w1, f = get_glyph_black(first_glyph) 
+      local w2, l = get_glyph_black(last_glyph)
+      w1 = math.ceil(w1 + remain)
+      w2 = math.ceil(w2)
+      if word_count <= 1 then
+        w1 = 0
+      end
+      width = width + remain
+      remain = width - math.floor(width)
+      width = width - remain
+      for i=1, w1 do
+        t[#t+1] = f/i -- add more black at the end of glyph
+      end
+      -- middle of the word
+      for i=1, (width-w1-w2) do
+        t[#t+1] = 0
+      end
+      -- last glyph
+      for i=1, w2 do
+        t[#t+1] = l/(w2-i+1)
+      end
+      line = calc_river(line, t, lines)
+      --print("black", f,l)
+    end
+    add_glue = function(x)
+      local t = {}
+      local r
+      local width = get_width(x,x.next) + remain
+      remain = width - math.floor(width)
+      width = width - remain
+      for i=1, width do
+        t[#t+1] = 1
+      end
+      --print("glue",#t)
+      line, r  = calc_river(line,t, lines)
+      if r > 1 then
+        local w = node.new("whatsit","pdf_literal")                                                                             
+        local color = 1 / r
+        w.data = string.format("q 1 %f 1 rg 0 0 m 0 5 l 5 5 l 5 0 l f Q", color)
+        -- print("color",w.data)
+        node.insert_before(n.head,x,w)
+      end
+      return r
+    end
+    for x in node.traverse(n.head) do
+      if x.id == glue_id and x.subtype == 0 then
+        --print("glue width", get_width(x,x.next))
+        add_word(last_glue, x, first_glyph,last_glyph)
+        local river_value = add_glue(x)
+        -- print("riverness", river_value)
+        first = true
+        last_glue = x.next -- calculate width of next word from here
+      elseif x.id == glyph_id then
+        if first then
+          first_glyph = x
+        end
+        first = false
+        last_glyph = x
+      end
+    end
+    add_word(last_glue, x, first_glyph, last_glyph)
+    --table.insert(lines, calc_river(t,lines))
+    --for k,v in pairs(line) do print(k,v) end 
+    table.insert(lines,line)
+    -- print(table.concat(lines[#lines],","))
+    -- local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
+    -- print(width,table.concat(t))
+  end
+  return 0
 end
 
 
+function linebreaker.last_line_width(head)
+  local w
+  local last = node.tail(head)
+  local n = node.copy(last)
+  n.head = node.remove(n.head, node.tail(n.head))
+  for x in node.traverse(n.head) do
+    if x.id == glue_id then
+      if x.subtype == 15 then
+        n.head = node.remove(n.head, x)
+      end
+    end
+  end
+  w, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n.head)
+  w1, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n)
+  print("line", w, w1)
+  return w
+end
+
 
 function linebreaker.best_solution(par, parameters)
-	-- save current node list, because call to the linebreaker modifies it
-	-- and we wouldn't be able to run it multiple times
-	local head = node.copy_list(par)
-	-- this shouldn't happen
-	if #parameters > linebreaker.max_cycles then
-		-- print "max cycles found"
-		return linebreaker.breaker(head,find_best(parameters))
-	end
-	local params = parameters[#parameters]	-- newest parameters are last in the
-	-- table
-	local newparams =  {}
-	-- break paragraph
-	local newhead, info = linebreaker.breaker(head, params)
-	-- calc badness
-	local badness = linebreaker.par_badness(newhead)
-	params.badness =  badness
-	-- print("badness", badness, tex.hfuzz, tex.tolerance)
-	-- [[
-	if badness > 0 then
-		-- calc new value of tolerance
-		local tolerance = calc_tolerance(params.tolerance) -- or 10000 
-		-- print("tolerance", tolerance)
-		-- save tolerance to newparams so this value will be used in next run
-		newparams.tolerance = tolerance 
-		table.insert(parameters, newparams)
-		-- print("high badness", badness)
-		-- run linebreaker again
-		return linebreaker.best_solution(par, parameters)
-	end
-	-- detect rivers only for paragraphs without overflow boxes
-	local rivers = linebreaker.detect_rivers(newhead)
-	-- print("rivers", rivers)
-	-- print "normal return"
-	--]]
-	return newhead, info
+  -- save current node list, because call to the linebreaker modifies it
+  -- and we wouldn't be able to run it multiple times
+  local head = node.copy_list(par)
+  -- this shouldn't happen
+  if #parameters > linebreaker.max_cycles then
+    -- print "max cycles found"
+    return linebreaker.breaker(head,find_best(parameters))
+  end
+  local params = parameters[#parameters]	-- newest parameters are last in the
+  -- table
+  local newparams =  {}
+  -- break paragraph
+  local newhead, info = linebreaker.breaker(head, params)
+  -- calc badness
+  local badness = linebreaker.par_badness(newhead)
+  for k,v in pairs(info) do
+    tex[k] = v
+  end
+  -- don't allow lines shorter than the paragraph indent
+  local last_line_width = linebreaker.last_line_width(newhead)
+  print("last line width", last_line_width, tex.parindent * linebreaker.width_factor)
+  if last_line_width < tex.parindent * linebreaker.width_factor then
+    print "too small line"
+    badness = 10000
+  end
+
+  params.badness =  badness
+  -- print("badness", badness, tex.hfuzz, tex.tolerance)
+  -- [[
+  if badness > 0 then
+    -- calc new value of tolerance
+    local tolerance = calc_tolerance(params.tolerance) -- or 10000 
+    -- print("tolerance", tolerance)
+    -- save tolerance to newparams so this value will be used in next run
+    newparams.tolerance = tolerance 
+    table.insert(parameters, newparams)
+    -- print("high badness", badness)
+    -- run linebreaker again
+    return linebreaker.best_solution(par, parameters)
+  end
+  -- detect rivers only for paragraphs without overflow boxes
+  local rivers = linebreaker.detect_rivers(newhead)
+  -- print("rivers", rivers)
+  -- print "normal return"
+  --]]
+  return newhead, info
 end
 
 -- this is just reporting function which print lines with glue widths.
 -- this may be useful in river detection
 local function glue_width(head)
-	for n in node.traverse_id(hlist_id, head) do
-		local t = {}
-		local set = n.glue_set
-		local sign = n.glue_sign
-		local order =  n.glue_order
-		for x in node.traverse(n.head) do
-			if x.id == glue_id then
-				local g = x.spec
-				local size = glue_calc(x, sign, set)
-				t[#t+1] = ":"..size.."."
-			elseif x.id == glyph_id then
-				t[#t+1] = char(x.char)
-			end
-		end
-		local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
-		-- print(width,table.concat(t))
-	end
+  for n in node.traverse_id(hlist_id, head) do
+    local t = {}
+    local set = n.glue_set
+    local sign = n.glue_sign
+    local order =  n.glue_order
+    for x in node.traverse(n.head) do
+      if x.id == glue_id then
+        local g = x.spec
+        local size = glue_calc(x, sign, set)
+        t[#t+1] = ":"..size.."."
+      elseif x.id == glyph_id then
+        t[#t+1] = char(x.char)
+      end
+    end
+    local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
+    -- print(width,table.concat(t))
+  end
 end
 
 function linebreaker.linebreak(head,is_display)
-	local parameters = linebreaker.parameters()
-	local newhead, info = linebreaker.best_solution(head, {parameters}) 
-	--print(tex.tolerance,tex.looseness, tex.adjdemerits, info.looseness, info.demerits)
-	-- glue_width(newhead)
-	tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
-	tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
-	--return linebreaker.traverse(add_parskip(newhead))
-	return newhead
+  local parameters = linebreaker.parameters()
+  local newhead, info = linebreaker.best_solution(head, {parameters}) 
+  --print(tex.tolerance,tex.looseness, tex.adjdemerits, info.looseness, info.demerits)
+  -- glue_width(newhead)
+  tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
+  tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
+  --return linebreaker.traverse(add_parskip(newhead))
+  return newhead
 end
 
 
