@@ -147,10 +147,10 @@ end
 -- max_tolerance / max_cycles is added to the current tolerance value
 local function calc_tolerance(previous)
   local previous = previous or tex.tolerance
-	local max_cycles = linebreaker.max_cycles
-	local max_tolerance = linebreaker.max_tolerance 
+  local max_cycles = linebreaker.max_cycles
+  local max_tolerance = linebreaker.max_tolerance 
   local new =  previous + (max_tolerance / max_cycles)-- + math.sqrt(previous * 4)
-	return (new < max_tolerance) and new or max_tolerance
+  return (new < max_tolerance) and new or max_tolerance
 end
 
 -- river detection 
