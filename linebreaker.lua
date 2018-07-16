@@ -3,6 +3,8 @@ local linebreaker = {}
 local hlist_id = node.id "hlist"
 local glyph_id = node.id "glyph"
 local glue_id = node.id "glue"
+local vlist_id = node.id "vlist"
+local maxval = 0x10FFFF
 
 
 -- max allowed value of tolerance
@@ -81,14 +83,26 @@ function linebreaker.traverse(head)
 end
 
 
-local char = unicode.utf8.char
+local utfchar = unicode.utf8.char
+local chartounicode = function(char)
+  -- maximum Unicode value, 0x10FFFF
+  local num = tonumber(char, 16)
+  if num < maxval then
+    return utfchar(num)
+  end
+  return char
+end
+
+local getchar = function(n)
+  return chartounicode(font_identifiers[n.font].characters[n.char].tounicode)
+end
 
 -- get text content of node list
 local function get_text(line)
 	local t = {}
 	for n in node.traverse(line) do
 		if n.id == 10 then t[#t+1] = " "
-		elseif n.id == glyph_id then t[#t+1] = char(n.char or "?") 
+		elseif n.id == glyph_id then t[#t+1] = char(n.char) 
 		end
 	end
 	return table.concat(t)
@@ -394,7 +408,7 @@ local function glue_width(head)
         local size = glue_calc(x, sign, set)
         t[#t+1] = ":"..size.."."
       elseif x.id == glyph_id then
-        t[#t+1] = char(x.char)
+        t[#t+1] = getchar(x.char)
       end
     end
     local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
