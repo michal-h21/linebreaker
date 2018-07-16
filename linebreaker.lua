@@ -6,6 +6,9 @@ local glue_id = node.id "glue"
 local vlist_id = node.id "vlist"
 local maxval = 0x10FFFF
 
+local fonts = fonts or {}
+fonts.hashes = fonts.hashes or {}
+local font_identifiers = fonts.hashes.identifiers or {}
 
 -- max allowed value of tolerance
 linebreaker.max_tolerance = 9999
@@ -84,25 +87,27 @@ end
 
 
 local utfchar = unicode.utf8.char
-local chartounicode = function(char)
-  -- maximum Unicode value, 0x10FFFF
-  local num = tonumber(char, 16)
-  if num < maxval then
-    return utfchar(num)
-  end
-  return char
-end
 
 local getchar = function(n)
-  return chartounicode(font_identifiers[n.font].characters[n.char].tounicode)
+  local t = {}
+  local xchar = font_identifiers[n.font].characters[n.char].unicode
+  if type(xchar) == "table" then
+    for k,v in pairs(xchar) do
+      t[#t+1] = utfchar(v)
+    end
+  else
+    return utfchar(xchar)
+  end
+  return table.concat(t)
 end
 
 -- get text content of node list
 local function get_text(line)
 	local t = {}
 	for n in node.traverse(line) do
-		if n.id == 10 then t[#t+1] = " "
-		elseif n.id == glyph_id then t[#t+1] = char(n.char) 
+		if n.id == glue_id then t[#t+1] = " "
+		elseif n.id == glyph_id then t[#t+1] = getchar(n) 
+    elseif n.id == hlist_id or n.id == vlist_id then t[#t+1] = get_text(n.head)
 		end
 	end
 	return table.concat(t)
@@ -408,7 +413,7 @@ local function glue_width(head)
         local size = glue_calc(x, sign, set)
         t[#t+1] = ":"..size.."."
       elseif x.id == glyph_id then
-        t[#t+1] = getchar(x.char)
+        t[#t+1] = getchar(x)
       end
     end
     local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
