@@ -91,12 +91,15 @@ local utfchar = unicode.utf8.char
 local getchar = function(n)
   local t = {}
   local xchar = font_identifiers[n.font].characters[n.char].unicode
+
   if type(xchar) == "table" then
     for k,v in pairs(xchar) do
       t[#t+1] = utfchar(v)
     end
   else
-    return utfchar(xchar)
+    -- 8-bit fonts don't contain the unicode value, so just return the char
+    -- value of node. In some cases it will be good, for math it will be mostly wrong
+    return utfchar(xchar or n.char)
   end
   return table.concat(t)
 end
@@ -443,6 +446,8 @@ function linebreaker.hpack_quality(incl, detail, head, first, last)
     print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
   end
 end
+
+linebreaker.get_text = get_text
 
 return linebreaker
 
