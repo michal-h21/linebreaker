@@ -421,9 +421,14 @@ local function glue_width(head)
   end
 end
 
+
+-- test whether the current overfull box message occurs inside our linebreaker function
+local is_inside_linebreaker = false
 function linebreaker.linebreak(head,is_display)
   local parameters = linebreaker.parameters()
+  is_inside_linebreaker = true
   local newhead, info = linebreaker.best_solution(head, {parameters}) 
+  is_inside_linebreaker = false
   --print(tex.tolerance,tex.looseness, tex.adjdemerits, info.looseness, info.demerits)
   -- glue_width(newhead)
   tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
@@ -432,6 +437,12 @@ function linebreaker.linebreak(head,is_display)
   return newhead
 end
 
+function linebreaker.hpack_quality(incl, detail, head, first, last)
+  if not is_inside_linebreaker then
+    local detail_msg = incl=="overfull" and "overflow" or "baddness"
+    print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
+  end
+end
 
 return linebreaker
 
