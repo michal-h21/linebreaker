@@ -47,4 +47,3 @@ My idea is to process this returned node list, detect problems and call
 moment, overflow box detection works somehow, river detection is a proof of
 concept and it needs further corrections.
 
-It would be nice to use methods proposed by [Philip Tayllor](https://www.tug.org/TUGboat/tb14-2/tb39taylor-para.pdf).
