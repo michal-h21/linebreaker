@@ -10,6 +10,12 @@ local fonts = fonts or {}
 fonts.hashes = fonts.hashes or {}
 local font_identifiers = fonts.hashes.identifiers or {}
 
+
+-- debugging function, it can be redefined to print debug info if needed
+-- it discards arguments by default
+function linebreaker.debug_print(...)
+end
+
 -- max allowed value of tolerance
 linebreaker.max_tolerance = 9999
 -- line breaking function is customizable
@@ -74,14 +80,14 @@ end
 function linebreaker.traverse(head)
 	--for n in node.traverse(node.tail(head).head) do
 	for n in node.traverse(head) do
-		print(n.id, n.subtype)
+		linebreaker.debug_print(n.id, n.subtype)
 		if n.id == 10 then
 			local x = n.spec or {}
 			--x.shrink = 111222
-			print("glue", x.shrink,x.stretch)
+			linebreaker.debug_print("glue", x.shrink,x.stretch)
 		end
 	end
-	print "****************"
+	linebreaker.debug_print "****************"
 	return head
 end
 
@@ -143,9 +149,9 @@ local function find_best(params)
 			min = badness
 		end
 	end
-	print "best solution"
+	linebreaker.debug_print "best solution"
 	for k,v in pairs(n) do 
-		print(k,v)
+		linebreaker.debug_print(k,v)
 	end
 	return n
 end
@@ -348,7 +354,7 @@ function linebreaker.last_line_width(head)
   end
   w, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n.head)
   w1, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n)
-  print("line", w, w1)
+  linebreaker.debug_print("line", w, w1)
   return w
 end
 
@@ -374,9 +380,9 @@ function linebreaker.best_solution(par, parameters)
   end
   -- don't allow lines shorter than the paragraph indent
   local last_line_width = linebreaker.last_line_width(newhead)
-  print("last line width", last_line_width, tex.parindent * linebreaker.width_factor)
+  linebreaker.debug_print("last line width", last_line_width, tex.parindent * linebreaker.width_factor)
   if last_line_width < tex.parindent * linebreaker.width_factor then
-    print "too small line"
+    linebreaker.debug_print "too small line"
     badness = 10000
   end
 
@@ -443,7 +449,7 @@ end
 function linebreaker.hpack_quality(incl, detail, head, first, last)
   if not is_inside_linebreaker then
     local detail_msg = incl=="overfull" and "overflow" or "baddness"
-    print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
+    linebreaker.debug_print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
   end
 end
 
