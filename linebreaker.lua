@@ -14,6 +14,7 @@ local font_identifiers = fonts.hashes.identifiers or {}
 -- debugging function, it can be redefined to print debug info if needed
 -- it discards arguments by default
 function linebreaker.debug_print(...)
+  -- print(table.concat({...}, "\t"))
 end
 
 -- max allowed value of tolerance
@@ -341,7 +342,8 @@ end
 
 
 function linebreaker.last_line_width(head)
-  local w
+  -- I don't really remember what I was trying to do here
+  local w, w1
   local last = node.tail(head)
   local n = node.copy(last)
   n.head = node.remove(n.head, node.tail(n.head))
@@ -352,6 +354,8 @@ function linebreaker.last_line_width(head)
       end
     end
   end
+  -- something went wrong, so discard this solution
+  if not n.head then return 0 end
   w, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n.head)
   w1, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n)
   linebreaker.debug_print("line", w, w1)
@@ -382,7 +386,7 @@ function linebreaker.best_solution(par, parameters)
   local last_line_width = linebreaker.last_line_width(newhead)
   linebreaker.debug_print("last line width", last_line_width, tex.parindent * linebreaker.width_factor)
   if last_line_width < tex.parindent * linebreaker.width_factor then
-    linebreaker.debug_print "too small line"
+    linebreaker.debug_print "too short last line"
     badness = 10000
   end
 
