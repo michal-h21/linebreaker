@@ -405,7 +405,7 @@ function linebreaker.best_solution(par, parameters)
     return linebreaker.best_solution(par, parameters)
   end
   -- detect rivers only for paragraphs without overflow boxes
-  local rivers = linebreaker.detect_rivers(newhead)
+  -- local rivers = linebreaker.detect_rivers(newhead)
   -- print("rivers", rivers)
   -- print "normal return"
   --]]
@@ -455,6 +455,12 @@ function linebreaker.hpack_quality(incl, detail, head, first, last)
     local detail_msg = incl=="overfull" and "overflow" or "baddness"
     linebreaker.debug_print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
   end
+end
+
+-- It seems necessary to call the post_linebreak filter in order to support floats
+-- Even if it does nothing but to return the node list. I don't understand why...
+function linebreaker.post_linebreak(head)
+  return true
 end
 
 linebreaker.get_text = get_text

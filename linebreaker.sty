@@ -5,6 +5,7 @@
 local linebreaker = require "linebreaker"
 linebreaker.max_cycles = 90
 luatexbase.add_to_callback("linebreak_filter", linebreaker.linebreak, "new linebreak callback")
+luatexbase.add_to_callback("post_linebreak_filter", linebreaker.post_linebreak, "new linebreak callback")
 luatexbase.add_to_callback("hpack_quality", linebreaker.hpack_quality, "Our overfull box reporting function")
 %luatexbase.add_to_callback("post_linebreak_filter", linebreaker.traverse, "xxx")
 }
