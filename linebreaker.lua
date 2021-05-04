@@ -18,7 +18,9 @@ function linebreaker.debug_print(...)
 end
 
 -- max allowed value of tolerance
-linebreaker.max_tolerance = 9999
+linebreaker.max_tolerance =9999 
+-- maximal allowed emergencystretch
+linebreaker.max_emergencystretch = tex.sp("3em")
 -- line breaking function is customizable
 linebreaker.breaker = tex.linebreak -- linebreak function
 linebreaker.max_cycles = 30 -- max # of attempts to find best solution
@@ -37,7 +39,7 @@ linebreaker.previous_points = linebreaker.vertical_point / linebreaker.boxsize
 linebreaker.width_factor = 1.5
 -- return array with default parameters
 function linebreaker.parameters()
-	return {}--{emergencystretch=tex.sp(".5em")}
+	return {} -- hfuzz=tex.sp("1pt")/2}
 end
 
 -- function linebreaker.make_default_parameters()
@@ -126,7 +128,7 @@ end
 -- find badness of a line
 function linebreaker.par_badness(head)
 	local n = 0
-	for line in node.traverse_id(0, head) do
+	for line in node.traverse_id(hlist_id, head) do
 		-- print(get_text(line.head), line.glue_order, line.glue_sign, line.glue_set)
 		-- glue_sign: > 0 = normal, 1 = stretch,  2 = shrink
 		-- we count only shrink, but stretch may result in overfull box as well
@@ -379,9 +381,6 @@ function linebreaker.best_solution(par, parameters)
   local newhead, info = linebreaker.breaker(head, params)
   -- calc badness
   local badness = linebreaker.par_badness(newhead)
-  for k,v in pairs(info) do
-    tex[k] = v
-  end
   -- don't allow lines shorter than the paragraph indent
   local last_line_width = linebreaker.last_line_width(newhead)
   linebreaker.debug_print("last line width", last_line_width, tex.parindent * linebreaker.width_factor)
@@ -399,6 +398,7 @@ function linebreaker.best_solution(par, parameters)
     -- print("tolerance", tolerance)
     -- save tolerance to newparams so this value will be used in next run
     newparams.tolerance = tolerance 
+    newparams.emergencystretch = (params.emergencystretch or 0) + linebreaker.max_emergencystretch / linebreaker.max_cycles
     table.insert(parameters, newparams)
     -- print("high badness", badness)
     -- run linebreaker again
