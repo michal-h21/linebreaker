@@ -14,11 +14,15 @@ local font_identifiers = fonts.hashes.identifiers or {}
 -- debugging function, it can be redefined to print debug info if needed
 -- it discards arguments by default
 function linebreaker.debug_print(...)
-  -- print(table.concat({...}, "\t"))
+  if linebreaker.debug then
+    print(table.concat({...}, "\t"))
+  end
 end
 
+linebreaker.debug = false
+
 -- max allowed value of tolerance
-linebreaker.max_tolerance =9999 
+linebreaker.max_tolerance = 9999 
 -- maximal allowed emergencystretch
 linebreaker.max_emergencystretch = tex.sp("3em")
 -- line breaking function is customizable
@@ -365,6 +369,8 @@ function linebreaker.last_line_width(head)
 end
 
 
+-- try to linebreak current paragraph with increasing tolerance and
+-- emergencystretch
 function linebreaker.best_solution(par, parameters)
   -- save current node list, because call to the linebreaker modifies it
   -- and we wouldn't be able to run it multiple times
@@ -375,12 +381,18 @@ function linebreaker.best_solution(par, parameters)
     return linebreaker.breaker(head,find_best(parameters))
   end
   local params = parameters[#parameters]	-- newest parameters are last in the
-  -- table
+  -- table that will be used in recursive invocations of this function
+  -- it holds updated parameters
   local newparams =  {}
+  -- this value is set by hpack_quality callback that is executed by
+  -- tex.linebreak when overflow or underflow happens
+  linebreaker.badness = 0
   -- break paragraph
   local newhead, info = linebreaker.breaker(head, params)
-  -- calc badness
-  local badness = linebreaker.par_badness(newhead)
+  -- calc badness -- we don't use this anymore, badness of the currently 
+  -- processed node list is set by hpack_filter
+  -- local badness = linebreaker.par_badness(newhead)
+  local badness = linebreaker.badness or 0
   -- don't allow lines shorter than the paragraph indent
   local last_line_width = linebreaker.last_line_width(newhead)
   linebreaker.debug_print("last line width", last_line_width, tex.parindent * linebreaker.width_factor)
@@ -390,7 +402,7 @@ function linebreaker.best_solution(par, parameters)
   end
 
   params.badness =  badness
-  -- print("badness", badness, tex.hfuzz, tex.tolerance)
+  -- print("badness", badness, tex.hfuzz, tex.tolerance, linebreaker.badness)
   -- [[
   if badness > 0 then
     -- calc new value of tolerance
@@ -452,9 +464,10 @@ end
 
 function linebreaker.hpack_quality(incl, detail, head, first, last)
   if not is_inside_linebreaker then
-    local detail_msg = incl=="overfull" and "overflow" or "baddness"
+    local detail_msg = incl=="overfull" and "overflow" or "badness"
     linebreaker.debug_print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
   end
+  linebreaker.badness = (linebreaker.badness or 0) + detail
 end
 
 -- It seems necessary to call the post_linebreak filter in order to support floats
