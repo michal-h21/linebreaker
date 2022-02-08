@@ -2,12 +2,39 @@
 
 \RequirePackage{luatexbase}
 \directlua{%
-local linebreaker = require "linebreaker"
+linebreaker = require "linebreaker"
 % linebreaker.max_cycles = 90
 luatexbase.add_to_callback("linebreak_filter", linebreaker.linebreak, "new linebreak callback")
 luatexbase.add_to_callback("post_linebreak_filter", linebreaker.post_linebreak, "new linebreak callback")
 luatexbase.add_to_callback("hpack_quality", linebreaker.hpack_quality, "Our overfull box reporting function")
 %luatexbase.add_to_callback("post_linebreak_filter", linebreaker.traverse, "xxx")
 }
+
+
+% linebreaker.debug = false
+% 
+% -- max allowed value of tolerance
+% linebreaker.max_tolerance = 9999 
+% -- maximal allowed emergencystretch
+% linebreaker.max_emergencystretch = tex.sp("3em")
+% -- line breaking function is customizable
+% linebreaker.max_cycles = 30 -- max # of attempts to find best solution
+% 														-- the number is totally arbitrary
+% 
+% linebreaker.boxsize = 65536 -- default box size is 1pt. 
+% 														-- value is in scaled points
+\ExplSyntaxOn
+\keys_define:nn{linebreaker}{
+  debug .code:n = \directlua{linebreaker.debug=true},
+  maxtolerance .code:n = \directlua{linebreaker.max_tolerance = tonumber("#1")},
+  maxemergencystretch .code:n = \directlua{linebreaker.max_emergencystretch = tex.sp("#1")},
+  maxcycles .code:n = \directlua{linebreaker.max_cycles = tonumber("#1")},
+}
+\NewDocumentCommand{\linebreakersetup}{m}{
+\keys_set:nn {linebreaker} {#1}
+}
+\ExplSyntaxOff
+
+
 
 \endinput
