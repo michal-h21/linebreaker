@@ -188,7 +188,7 @@ local function calc_tolerance(previous)
   return (new < max_tolerance) and new or max_tolerance
 end
 
--- river detection 
+-- river detection -- it doesn't work at the moment, maybe in the future?
 -- idea is following:
 -- 1. count widths of words and spaces 
 -- 2. divide widths to segments of some width (1pt?)
