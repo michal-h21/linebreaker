@@ -409,20 +409,25 @@ local function glue_width(head)
   end
 end
 
+local function fix_nest(info)
+  tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
+  tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
+end
 
 -- test whether the current overfull box message occurs inside our linebreaker function
 local is_inside_linebreaker = false
 function linebreaker.linebreak(head,is_display)
   -- we can disable linebreaker processing
   if linebreaker.active == false then
-    return linebreaker.breaker(head)
+    local newhead, info =  linebreaker.breaker(head)
+    fix_nest(info)
+    return newhead
   end
   local parameters = linebreaker.parameters()
   is_inside_linebreaker = true
   local newhead, info = linebreaker.best_solution(head, {parameters}) 
   is_inside_linebreaker = false
-  tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
-  tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
+  fix_nest(info)
   return newhead
 end
 
