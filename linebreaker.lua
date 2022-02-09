@@ -320,6 +320,8 @@ function linebreaker.last_line_width(head)
   local w, w1
   local last = node.tail(head)
   local n = node.copy(last)
+  -- last node is not node list, return negative number
+  if not n.head then return -1 end
   n.head = node.remove(n.head, node.tail(n.head))
   for x in node.traverse(n.head) do
     if x.id == glue_id then
@@ -363,7 +365,7 @@ function linebreaker.best_solution(par, parameters)
   -- don't allow lines shorter than the paragraph indent
   local last_line_width = linebreaker.last_line_width(newhead)
   linebreaker.debug_print("last line width", last_line_width, "parindent:", tex.parindent * linebreaker.width_factor)
-  if last_line_width < tex.parindent * linebreaker.width_factor then
+  if last_line_width > 0 and last_line_width < tex.parindent * linebreaker.width_factor then
     linebreaker.debug_print "too short last line"
     badness = 10000
   end
