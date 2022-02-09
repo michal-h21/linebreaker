@@ -22,6 +22,15 @@
 
 \usepackage{microtype}
 
+\newcommand\testbox[1]{%
+  \parbox{150pt}{%
+    \parindent=15pt%
+    \tolerance=1%
+    \pretolerance=1%
+    #1
+  }%
+}
+
 \title{The \texttt{Linebreaker} package}
 \author{Michal Hoftich\authormail{michal.h21@gmail.com}}
 \date{Version \version\\\gitdate}
@@ -39,44 +48,29 @@ with different values for parameters which are taken into account in this
 process.
 
 
+\bigskip
+Example of use:
+\bigskip
+
  \linebreakerdisable
 % \noindent\begin{minipage}{220pt}
- \parbox{220pt}{%
-   \parindent=15pt
-  \fontspec{Latin Modern Roman}
+ \def\testtext{%
 The example document given below creates two pages by using Lua code alone. You
 will learn how to access TeX's boxes and counters from the Lua side, shipout a
 page into the PDF file, create horizontal and vertical boxes (hbox and vbox),
 create new nodes and manipulate the nodes links structure. The example covers
 the following node types: rule, whatsit, vlist, hlist and action.
-
-In the example code we use black squares as the contents of the pages and not
-normal text, because character handling takes more code and will be covered
-later on.
-
-Save the following file into myprogram.lua and use the TeX stub from above (or
-get the source here). 
+ }
+\noindent\testbox{%
+  \testtext%
+}
+\linebreakerenable
+\hfill
+\testbox{%
+  \testtext%
 }
 
-
-\linebreakerenable
-
-
-\noindent\begin{minipage}{220pt}
-The example document given below creates two pages by using Lua code alone. You
-will learn how to access TeX's boxes and counters from the Lua side, shipout a
-page into the PDF file, create horizontal and vertical boxes (hbox and vbox),
-create new nodes and manipulate the nodes links structure. The example covers
-the following node types: rule, whatsit, vlist, hlist and action.
-
-In the example code we use black squares as the contents of the pages and not
-normal text, because character handling takes more code and will be covered
-later on.
-
-Save the following file into myprogram.lua and use the TeX stub from above (or
-get the source here). 
-
-\end{minipage}
+% \end{minipage}
 \section{Usage}
 
 
