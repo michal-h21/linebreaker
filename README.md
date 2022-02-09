@@ -26,8 +26,8 @@ process.
 
 ## Some background
 
-This repository contains experimental line-breaking callback for LuaTeX engine (
-it should work with any format). Motivation for this was a
+This repository contains experimental line-breaking callback for LuaTeX engine 
+(it should work with any format). Motivation for this was a
 [question](http://tex.stackexchange.com/q/200989/2891) by Frank Mittelbach on
 TeX.sx. His idea is to rewrite TeX paragraph building algorithm in Lua, in
 order to support river detection and similar tasks, unsupported by standard TeX
@@ -35,7 +35,7 @@ line-breaking algorithm.
 
 As complete rewrite of line-breaking algorithm seems to be huge task, I tried
 different approach. LuaTeX provides several callbacks for working with node lists. 
-There callbacks are called when some actions on the node lists happens. For
+These callbacks are called when some actions on the node lists happens. For
 example ligaturing, kerning, before line-breaking, after line-breaking and
 callback for doing the line-breaking. There is a `tex.linebreak` function, which takes
 node list and table with TeX parameters (`lineskip`, `baselineskip`, `tolerance`,
