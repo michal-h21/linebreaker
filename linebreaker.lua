@@ -30,7 +30,7 @@ linebreaker.breaker = tex.linebreak -- linebreak function
 linebreaker.max_cycles = 30 -- max # of attempts to find best solution
 														-- the number is totally arbitrary
 
-linebreaker.boxsize = 65536 -- default box size is 1pt. 
+linebreaker.boxsize = 65536 -- it is used in river detection. default box size is 1pt. 
 														-- value is in scaled points
 linebreaker.vertical_point = tex.baselineskip.width -- vertical matrix
 linebreaker.previous_points = linebreaker.vertical_point / linebreaker.boxsize
@@ -41,46 +41,12 @@ linebreaker.previous_points = linebreaker.vertical_point / linebreaker.boxsize
 -- factor which will multiply the parindent value to get the minimal allowed width
 -- of a last line in a paragraph
 linebreaker.width_factor = 1.5
+-- will be linebreaker active?
+linebreaker.active = true
 -- return array with default parameters
 function linebreaker.parameters()
-	return {} -- hfuzz=tex.sp("1pt")/2}
+	return {} 
 end
-
--- function linebreaker.make_default_parameters()
--- 				local parameters = {}
--- 				parameters.pardir = tex.pardir 
--- 				parameters.pretolerance= tex.pretolerance
--- 				parameters.tracingparagraphs= tex.tracingparagraphs
--- 				parameters.tolerance= tex.tolerance
--- 				parameters.looseness= tex.looseness
--- 				parameters.hyphenpenalty= tex.hyphenpenalty
--- 				parameters.exhyphenpenalty= tex.exhyphenpenalty
--- 				parameters.pdfadjustspacing= tex.pdfadjustspacing
--- 				parameters.adjdemerits= tex.adjdemerits
--- 				parameters.pdfprotrudechars= tex.pdfprotrudechars
--- 				parameters.linepenalty= tex.linepenalty
--- 				parameters.lastlinefit= tex.lastlinefit
--- 				parameters.doublehyphendemerits = tex.doublehyphendemerits 
--- 				parameters.finalhyphendemerits= tex.finalhyphendemerits
--- 				parameters.hangafter= tex.hangafter
--- 				parameters.interlinepenalty= tex.interlinepenalty
--- 				parameters.clubpenalty= tex.clubpenalty
--- 				parameters.widowpenalty= tex.widowpenalty
--- 				parameters.brokenpenalty= tex.brokenpenalty
--- 				parameters.emergencystretch= tex.emergencystretch
--- 				parameters.hangindent= tex.hangindent
--- 				parameters.hsize= tex.hsize
--- 				parameters.leftskip= tex.leftskip
--- 				parameters.rightskip= tex.rightskip
--- 				parameters.pdfeachlineheight= tex.pdfeachlineheight
--- 				parameters.pdfeachlinedepth= tex.pdfeachlinedepth
--- 				parameters.pdffirstlineheight= tex.pdffirstlineheight
--- 				parameters.pdflastlinedepth= tex.pdflastlinedepth
--- 				parameters.pdfignoreddimen= tex.pdfignoreddimen
--- 				parameters.parshape= tex.parshape
--- 				return parameters
--- end
--- 
 
 -- diagnostic function for traversing nodes returned by linebreaking
 -- function. only top level nodes are processed, not sublists
@@ -346,9 +312,11 @@ function linebreaker.detect_rivers(head)
   return 0
 end
 
+-- End of river detection
+
 
 function linebreaker.last_line_width(head)
-  -- I don't really remember what I was trying to do here
+  -- measure length of the last line in a paragraph
   local w, w1
   local last = node.tail(head)
   local n = node.copy(last)
@@ -364,7 +332,6 @@ function linebreaker.last_line_width(head)
   if not n.head then return 0 end
   w, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n.head)
   w1, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n)
-  linebreaker.debug_print("line", w, w1)
   return w
 end
 
@@ -377,7 +344,8 @@ function linebreaker.best_solution(par, parameters)
   local head = node.copy_list(par)
   -- this shouldn't happen
   if #parameters > linebreaker.max_cycles then
-    -- print "max cycles found"
+    -- we couldn't find a solution without badness
+    -- break paragraph with the least bad parameters
     return linebreaker.breaker(head,find_best(parameters))
   end
   local params = parameters[#parameters]	-- newest parameters are last in the
@@ -391,31 +359,27 @@ function linebreaker.best_solution(par, parameters)
   local newhead, info = linebreaker.breaker(head, params)
   -- calc badness -- we don't use this anymore, badness of the currently 
   -- processed node list is set by hpack_filter
-  -- local badness = linebreaker.par_badness(newhead)
   local badness = linebreaker.badness or 0
   -- don't allow lines shorter than the paragraph indent
   local last_line_width = linebreaker.last_line_width(newhead)
-  linebreaker.debug_print("last line width", last_line_width, tex.parindent * linebreaker.width_factor)
+  linebreaker.debug_print("last line width", last_line_width, "parindent:", tex.parindent * linebreaker.width_factor)
   if last_line_width < tex.parindent * linebreaker.width_factor then
     linebreaker.debug_print "too short last line"
     badness = 10000
   end
 
   params.badness =  badness
-  -- print("badness", badness, tex.hfuzz, tex.tolerance, linebreaker.badness)
-  -- [[
   if badness > 0 then
     -- calc new value of tolerance
     local tolerance = calc_tolerance(params.tolerance) -- or 10000 
-    -- print("tolerance", tolerance)
     -- save tolerance to newparams so this value will be used in next run
     newparams.tolerance = tolerance 
     newparams.emergencystretch = (params.emergencystretch or 0) + linebreaker.max_emergencystretch / linebreaker.max_cycles
     table.insert(parameters, newparams)
-    -- print("high badness", badness)
     -- run linebreaker again
     return linebreaker.best_solution(par, parameters)
   end
+  -- river detection doesn't work, so we don't execute ths code anymore
   -- detect rivers only for paragraphs without overflow boxes
   -- local rivers = linebreaker.detect_rivers(newhead)
   -- print("rivers", rivers)
@@ -442,7 +406,6 @@ local function glue_width(head)
       end
     end
     local width, h, d = node.dimensions(set, sign, order, n.head, node.tail(n.head))
-    -- print(width,table.concat(t))
   end
 end
 
@@ -450,15 +413,16 @@ end
 -- test whether the current overfull box message occurs inside our linebreaker function
 local is_inside_linebreaker = false
 function linebreaker.linebreak(head,is_display)
+  -- we can disable linebreaker processing
+  if linebreaker.active == false then
+    return linebreaker.breaker(head)
+  end
   local parameters = linebreaker.parameters()
   is_inside_linebreaker = true
   local newhead, info = linebreaker.best_solution(head, {parameters}) 
   is_inside_linebreaker = false
-  --print(tex.tolerance,tex.looseness, tex.adjdemerits, info.looseness, info.demerits)
-  -- glue_width(newhead)
   tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
   tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
-  --return linebreaker.traverse(add_parskip(newhead))
   return newhead
 end
 
