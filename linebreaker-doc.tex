@@ -1,7 +1,10 @@
 \documentclass{ltxdoc}
 
 
-\usepackage[english]{babel}
+% \usepackage[latin,english]{babel}=15pt
+\usepackage{lipsum}
+\usepackage{linebreaker}
+\linebreakersetup{debug}
 \usepackage{hyperref}
 \newcommand\authormail[1]{\footnote{\textless\url{#1}\textgreater}}
 \ifdefined\HCode
@@ -36,6 +39,44 @@ with different values for parameters which are taken into account in this
 process.
 
 
+ \linebreakerdisable
+% \noindent\begin{minipage}{220pt}
+ \parbox{220pt}{%
+   \parindent=15pt
+  \fontspec{Latin Modern Roman}
+The example document given below creates two pages by using Lua code alone. You
+will learn how to access TeX's boxes and counters from the Lua side, shipout a
+page into the PDF file, create horizontal and vertical boxes (hbox and vbox),
+create new nodes and manipulate the nodes links structure. The example covers
+the following node types: rule, whatsit, vlist, hlist and action.
+
+In the example code we use black squares as the contents of the pages and not
+normal text, because character handling takes more code and will be covered
+later on.
+
+Save the following file into myprogram.lua and use the TeX stub from above (or
+get the source here). 
+}
+
+
+\linebreakerenable
+
+
+\noindent\begin{minipage}{220pt}
+The example document given below creates two pages by using Lua code alone. You
+will learn how to access TeX's boxes and counters from the Lua side, shipout a
+page into the PDF file, create horizontal and vertical boxes (hbox and vbox),
+create new nodes and manipulate the nodes links structure. The example covers
+the following node types: rule, whatsit, vlist, hlist and action.
+
+In the example code we use black squares as the contents of the pages and not
+normal text, because character handling takes more code and will be covered
+later on.
+
+Save the following file into myprogram.lua and use the TeX stub from above (or
+get the source here). 
+
+\end{minipage}
 \section{Usage}
 
 
