@@ -19,5 +19,5 @@ ifeq ($(strip $(shell git rev-parse --is-inside-work-tree 2>/dev/null)),true)
 endif
 
 
-linebreaker-doc.pdf: linebreaker-doc.tex
+linebreaker-doc.pdf: linebreaker-doc.tex linebreaker.sty linebreaker.lua
 	latexmk -pdf -pdflatex='lualatex "\def\version{${VERSION}}\def\gitdate{${DATE}}\input{%S}"' $<
