@@ -1,0 +1,75 @@
+\documentclass{ltxdoc}
+
+
+\usepackage[english]{babel}
+\usepackage{hyperref}
+\newcommand\authormail[1]{\footnote{\textless\url{#1}\textgreater}}
+\ifdefined\HCode
+\renewcommand\authormail[1]{\space\textless\Link[#1]{}{}#1\EndLink\textgreater}
+\fi
+
+\usepackage{listings}
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Schola}
+% \setmonofont[Scale=MatchLowercase]{Inconsolatazi4}
+\IfFontExistsTF{Noto Sans Mono Regular}{%
+    \setmonofont[Scale=MatchLowercase]{Noto Sans Mono Regular}
+}{\setmonofont{NotoMono-Regular.ttf}}
+\usepackage{upquote}
+
+\usepackage{microtype}
+
+\title{The \texttt{Linebreaker} package}
+\author{Michal Hoftich\authormail{michal.h21@gmail.com}}
+\date{Version \version\\\gitdate}
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+
+Purpose of this experimental package is to prevent paragraph overflow in
+LuaTeX. Sometimes, TeX cannot find good points for line-breaking. This results
+in lines where part of words stick out of the paragraph shape. Linebreaker
+tries to prevent that using repeated execution of the line-breaking algorithm
+with different values for parameters which are taken into account in this
+process.
+
+
+\section{Usage}
+
+
+\begin{lstlisting}{latex}
+\usepackage{linebreaker}
+\end{lstlisting}
+
+
+\subsection{Example}
+
+
+\section{Some background}
+
+This repository contains experimental line-breaking callback for LuaTeX engine (
+it should work with any format). Motivation for this was a
+\href{http://tex.stackexchange.com/q/200989/2891}{question} by Frank Mittelbach on
+TeX.sx. His idea is to rewrite \TeX\ paragraph building algorithm in Lua, in
+order to support river detection and similar tasks, unsupported by standard TeX
+line-breaking algorithm.
+
+As complete rewrite of line-breaking algorithm seems to be huge task, I tried
+different approach. LuaTeX provides several callbacks for working with node lists. 
+There callbacks are called when some actions on the node lists happens. For
+example ligaturing, kerning, before line-breaking, after line-breaking and
+callback for doing the line-breaking. There is a `tex.linebreak` function, which takes
+node list and table with TeX parameters (`lineskip`, `baselineskip`, `tolerance`,
+etc.) New node list with lines broken into horizontal boxes is returned by this
+function.
+
+My idea is to process this returned node list, detect problems and call
+`tex.linebreak` with different parameters if problems were detected. At the
+moment, overflow box detection works somehow, river detection is a proof of
+concept and it needs further corrections.
+
+
+\end{document}
+
