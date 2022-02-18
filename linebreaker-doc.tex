@@ -1,4 +1,4 @@
-\documentclass{ltxdoc}
+\documentclass{l3doc}
 
 
 % \usepackage[latin,english]{babel}=15pt
@@ -10,6 +10,9 @@
 \ifdefined\HCode
 \renewcommand\authormail[1]{\space\textless\Link[#1]{}{}#1\EndLink\textgreater}
 \fi
+
+\ifdefined\gitdate\else\def\gitdate{Undefined}\fi
+\ifdefined\version\else\def\version{Undefined}\fi
 
 \usepackage{listings}
 \usepackage{fontspec}
@@ -31,6 +34,18 @@
   }%
 }
 
+\newcommand\printtest[1]{%
+  \linebreakerdisable%
+  \noindent\testbox{%
+    #1
+  }%
+  \linebreakerenable%
+  \hfill%
+  \testbox{%
+    #1
+  }%
+}
+
 \title{The \texttt{Linebreaker} package}
 \author{Michal Hoftich\authormail{michal.h21@gmail.com}}
 \date{Version \version\\\gitdate}
@@ -40,19 +55,21 @@
 
 \section{Introduction}
 
-Purpose of this experimental package is to prevent paragraph overflow in
-LuaTeX. Sometimes, TeX cannot find good points for line-breaking. This results
-in lines where part of words stick out of the paragraph shape. Linebreaker
-tries to prevent that using repeated execution of the line-breaking algorithm
-with different values for parameters which are taken into account in this
-process.
+This package tries to prevent overflow lines in paragraphs or boxes.
+It changes the Lua\TeX's \verb|linebreak| callback, and it re-typesets the paragraph 
+with increased values of \verb|\tolerance| and \cmd{\emergencystretch}
+until the overflow doesn't happen. If that doesn't help, it chooses the solution
+with the lowest badness.
+
+The code is experimental, and you may find bugs or clashes with
+other packages. Please send a bug report to the package's repository on 
+Github\footnote{\url{https://github.com/michal-h21/linebreaking}}
 
 
 \bigskip
-Example of use:
+\noindent\textbf{Example of use:}
 \bigskip
 
- \linebreakerdisable
 % \noindent\begin{minipage}{220pt}
  \def\testtext{%
 The example document given below creates two pages by using Lua code alone. You
@@ -61,50 +78,95 @@ page into the PDF file, create horizontal and vertical boxes (hbox and vbox),
 create new nodes and manipulate the nodes links structure. The example covers
 the following node types: rule, whatsit, vlist, hlist and action.
  }
-\noindent\testbox{%
-  \testtext%
-}
-\linebreakerenable
-\hfill
-\testbox{%
-  \testtext%
-}
+
+
+
+\printtest\testtext%
 
 % \end{minipage}
 \section{Usage}
 
+% \begin{lstlisting}{latex}
+% \usepackage[options]{linebreaker}
+\cmd{\usepackage}\oarg{options}\verb|{linebreaker}|
+% \end{lstlisting}
+
+\subsection{Provided commands}
+
+\begin{function}{\linebreakerdisable}
+disable line-breaking processing. \LaTeX\ will typeset the following paragraphs with the default values for line-breaking.
+\end{function}
+
+\begin{function}{\linebreakerenable}
+re-enable line-breaking processing after it was disabled by \cmd{\linebreakerdisable}.
+\end{function}
+
+\begin{function}{\linebreakersetup}
+  Change settings of the line-breaking algorithm.
+  
+
+  \noindent Usage: \cmd{\linebreakersetup}\Arg{options}
+
+  \noindent Available options are:
+\end{function}
+
+\begin{function}{maxcycles}
+number of attempts to re-typeset the paragraph.
+\end{function}
+
+\begin{function}{maxemergencystretch}
+maximal allowed value of \verb|\emergencystretch|.
+\end{function}
+
+\begin{function}{maxtolerance}
+maximal allowed value of \verb|tolerance|.
+\end{function}
+
+\begin{function}{debug}
+print debugging info to the terminal output.
+\end{function}
+
 
 \begin{lstlisting}{latex}
-\usepackage{linebreaker}
+\linebreakersetup{
+  maxtolerance=90,
+  maxemergencystretch=1em,
+  maxcycles=4
+  }
 \end{lstlisting}
 
 
-\subsection{Example}
 
+\section{Historical background}
 
-\section{Some background}
-
-This repository contains experimental line-breaking callback for LuaTeX engine (
-it should work with any format). Motivation for this was a
+The motivation to create this package was a 
 \href{http://tex.stackexchange.com/q/200989/2891}{question} by Frank Mittelbach on
-TeX.sx. His idea is to rewrite \TeX\ paragraph building algorithm in Lua, in
-order to support river detection and similar tasks, unsupported by standard TeX
+TeX.sx. His idea was to rewrite TeX’s paragraph-building algorithm in Lua to
+allow detection of rivers and similar tasks unsupported by the standard TeX
 line-breaking algorithm.
 
-As complete rewrite of line-breaking algorithm seems to be huge task, I tried
-different approach. LuaTeX provides several callbacks for working with node lists. 
-There callbacks are called when some actions on the node lists happens. For
-example ligaturing, kerning, before line-breaking, after line-breaking and
-callback for doing the line-breaking. There is a `tex.linebreak` function, which takes
-node list and table with TeX parameters (`lineskip`, `baselineskip`, `tolerance`,
-etc.) New node list with lines broken into horizontal boxes is returned by this
-function.
+As a complete rewrite of the line-breaking algorithm seemed too complicated, 
+I tried a different approach. Lua\TeX\ provides  callbacks for working with node lists. 
+It calls these callbacks when actions on the node lists happen, such as 
+ligaturing, kerning, before line-breaking, after line-breaking, and 
+callback that  handles the line-breaking process. 
+
+There is a \verb|tex.linebreak| function, which takes
+node list and table with \TeX\ parameters (like \verb|lineskip|, \verb|baselineskip|, \verb|tolerance|,
+etc.). It returns a new node list, with lines broken into horizontal boxes.
 
 My idea is to process this returned node list, detect problems and call
-`tex.linebreak` with different parameters if problems were detected. At the
-moment, overflow box detection works somehow, river detection is a proof of
-concept and it needs further corrections.
+`tex.linebreak` with different parameters if lines overflow. At the
+moment, overflow box detection works in most cases, but river detection is unusable, and it needs further corrections.
 
+\section{Changes}
+
+\begin{description}
+  \item[v0.1]
+    \begin{itemize}
+      \item Initial version
+    \end{itemize}
+\end{description}
 
 \end{document}
 
