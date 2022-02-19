@@ -4,6 +4,7 @@
 % \usepackage[latin,english]{babel}=15pt
 \usepackage{lipsum}
 \usepackage{linebreaker}
+\usepackage{lua-widow-control}
 \linebreakersetup{debug}
 \usepackage{hyperref}
 \newcommand\authormail[1]{\footnote{\textless\url{#1}\textgreater}}
@@ -69,7 +70,7 @@ typeset with default parameters. These are changed only for problematic
 paragraphs.
 
 The code is experimental, and you may find bugs or clashes with
-other packages. You send bug reports to the package's repository on 
+other packages. You can send bug reports to the package's repository on 
 Github\footnote{\url{https://github.com/michal-h21/linebreaker}}.
 
 
@@ -91,13 +92,17 @@ the following node types: rule, whatsit, vlist, hlist and action.
 \end{figure}
 
 % \end{minipage}
+\newpage
 \section{Usage}
 
-You can load the Linebreaker package to enable the overflow paragraph handling.
+There is only \LaTeX\ package at the moment. Con\TeX t and Plain \TeX\ are not supported.
+You can enable the overflow paragraph handling by loading of the Linebreaker package:
 
 % \begin{lstlisting}{latex}
 % \usepackage[options]{linebreaker}
+\begin{center}
 \cmd{\usepackage}\verb|{linebreaker}|
+\end{center}
 % \end{lstlisting}
 
 \subsection{Enable and disable Linebreaker}
@@ -118,10 +123,10 @@ Re-enable line-breaking processing after it was disabled by \cmd{\linebreakerdis
   Change settings of the line-breaking algorithm.
   Usage: \cmd{\linebreakersetup}\Arg{options}
 
-  \medskip
 
-Available options for the \cmd{\linebreakersetup} command are:
 \end{function}
+
+\subsubsection{Available options for the \cmd{\linebreakersetup} command}
 
 \begin{function}{maxcycles}
 Number of attempts to re-typeset the paragraph.
