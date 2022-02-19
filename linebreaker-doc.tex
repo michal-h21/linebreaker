@@ -38,11 +38,13 @@
   \linebreakerdisable%
   \noindent\testbox{%
     #1
+    \par\medskip\noindent \textbf{Without Linebreaker}
   }%
   \linebreakerenable%
   \hfill%
   \testbox{%
     #1
+    \par\medskip\noindent \textbf{With Linebreaker}
   }%
 }
 
@@ -57,13 +59,13 @@
 
 This package tries to prevent overflow lines in paragraphs or boxes.
 It changes the Lua\TeX's \verb|linebreak| callback, and it re-typesets the paragraph 
-with increased values of \verb|\tolerance| and \cmd{\emergencystretch}
+with increased values of \cmd{\tolerance} and \cmd{\emergencystretch}
 until the overflow doesn't happen. If that doesn't help, it chooses the solution
 with the lowest badness.
 
 The code is experimental, and you may find bugs or clashes with
-other packages. Please send a bug report to the package's repository on 
-Github\footnote{\url{https://github.com/michal-h21/linebreaking}}
+other packages. You send bug reports to the package's repository on 
+Github\footnote{\url{https://github.com/michal-h21/linebreaker}}.
 
 
 \bigskip
@@ -140,8 +142,8 @@ print debugging info to the terminal output.
 \section{Historical background}
 
 The motivation to create this package was a 
-\href{http://tex.stackexchange.com/q/200989/2891}{question} by Frank Mittelbach on
-TeX.sx. His idea was to rewrite TeX’s paragraph-building algorithm in Lua to
+question\footnote{\url{http://tex.stackexchange.com/q/200989/2891}} by Frank Mittelbach on
+TeX.SE. His idea was to rewrite TeX’s paragraph-building algorithm in Lua to
 allow detection of rivers and similar tasks unsupported by the standard TeX
 line-breaking algorithm.
 
@@ -159,10 +161,15 @@ My idea is to process this returned node list, detect problems and call
 `tex.linebreak` with different parameters if lines overflow. At the
 moment, overflow box detection works in most cases, but river detection is unusable, and it needs further corrections.
 
+\section{License}
+
+Permission is granted to copy, distribute and/or modify this software
+under the terms of the LaTeX Project Public License, version 1.3.
+
 \section{Changes}
 
 \begin{description}
-  \item[v0.1]
+  \item[v0.1, 2022-02-19]
     \begin{itemize}
       \item Initial version
     \end{itemize}
