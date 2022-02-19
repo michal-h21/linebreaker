@@ -25,7 +25,9 @@ linebreaker-doc.pdf: linebreaker-doc.tex linebreaker.sty linebreaker.lua
 build: linebreaker-doc.pdf
 	rm -rf build
 	mkdir -p build/linebreaker
-	cp linebreaker.sty linebreaker.lua linebreaker-doc.tex linebreaker-doc.pdf README.md build/linebreaker
+	cp linebreaker.sty linebreaker.lua linebreaker-doc.tex linebreaker-doc.pdf build/linebreaker
+	echo "#The Linebreaker package, version ${VERSION} (${DATE})" > build/linebreaker/README.md
+	cat CTAN-README.md >> build/linebreaker/README.md
 	cd build && zip -r linebreaker.zip linebreaker
 
 .PHONY: build
