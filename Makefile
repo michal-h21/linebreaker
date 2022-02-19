@@ -26,6 +26,7 @@ build: linebreaker-doc.pdf
 	rm -rf build
 	mkdir -p build/linebreaker
 	cp linebreaker.sty linebreaker.lua linebreaker-doc.tex linebreaker-doc.pdf README.md build/linebreaker
+	cd build && zip -r linebreaker.zip linebreaker
 
 .PHONY: build
 

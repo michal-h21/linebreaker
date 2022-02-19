@@ -63,14 +63,16 @@ with increased values of \cmd{\tolerance} and \cmd{\emergencystretch}
 until the overflow doesn't happen. If that doesn't help, it chooses the solution
 with the lowest badness.
 
+
+The advantage of this approach is that paragraphs that have not overflowed are
+typeset with default parameters. These are changed only for problematic
+paragraphs.
+
 The code is experimental, and you may find bugs or clashes with
 other packages. You send bug reports to the package's repository on 
 Github\footnote{\url{https://github.com/michal-h21/linebreaker}}.
 
 
-\bigskip
-\noindent\textbf{Example of use:}
-\bigskip
 
 % \noindent\begin{minipage}{220pt}
  \def\testtext{%
@@ -83,58 +85,68 @@ the following node types: rule, whatsit, vlist, hlist and action.
 
 
 
+\begin{figure}
 \printtest\testtext%
+\caption{Example of use}
+\end{figure}
 
 % \end{minipage}
 \section{Usage}
 
+You can load the Linebreaker package to enable the overflow paragraph handling.
+
 % \begin{lstlisting}{latex}
 % \usepackage[options]{linebreaker}
-\cmd{\usepackage}\oarg{options}\verb|{linebreaker}|
+\cmd{\usepackage}\verb|{linebreaker}|
 % \end{lstlisting}
 
-\subsection{Provided commands}
+\subsection{Enable and disable Linebreaker}
+
+The package owerflow handling is enabled by default. You can disable it and then re-enable using the following commands:
 
 \begin{function}{\linebreakerdisable}
-disable line-breaking processing. \LaTeX\ will typeset the following paragraphs with the default values for line-breaking.
+Disable line-breaking processing. \LaTeX\ will typeset the following paragraphs with the default values for line-breaking.
 \end{function}
 
 \begin{function}{\linebreakerenable}
-re-enable line-breaking processing after it was disabled by \cmd{\linebreakerdisable}.
+Re-enable line-breaking processing after it was disabled by \cmd{\linebreakerdisable}.
 \end{function}
+
+\subsection{Change of Linebreaker parameters}
 
 \begin{function}{\linebreakersetup}
   Change settings of the line-breaking algorithm.
-  
+  Usage: \cmd{\linebreakersetup}\Arg{options}
 
-  \noindent Usage: \cmd{\linebreakersetup}\Arg{options}
+  \medskip
 
-  \noindent Available options are:
+Available options for the \cmd{\linebreakersetup} command are:
 \end{function}
 
 \begin{function}{maxcycles}
-number of attempts to re-typeset the paragraph.
+Number of attempts to re-typeset the paragraph.
 \end{function}
 
 \begin{function}{maxemergencystretch}
-maximal allowed value of \verb|\emergencystretch|.
+Maximal allowed value of \verb|\emergencystretch|.
 \end{function}
 
 \begin{function}{maxtolerance}
-maximal allowed value of \verb|tolerance|.
+Maximal allowed value of \verb|tolerance|.
 \end{function}
 
 \begin{function}{debug}
-print debugging info to the terminal output.
+Print debugging info to the terminal output.
 \end{function}
 
+\subsubsection{Example of \cmd{\linebreakersetup} use}
 
 \begin{lstlisting}{latex}
 \linebreakersetup{
   maxtolerance=90,
   maxemergencystretch=1em,
   maxcycles=4
-  }
+}
 \end{lstlisting}
 
 
