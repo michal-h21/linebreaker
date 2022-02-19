@@ -10,7 +10,7 @@ with the lowest badness.
 ## Usage
 
 
-     \usepackage[options]{linebreaker}
+     \usepackage{linebreaker}
 
 
 ## Example
