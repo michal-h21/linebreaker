@@ -331,7 +331,7 @@ function linebreaker.last_line_width(head)
     end
   end
   -- something went wrong, so discard this solution
-  if not n.head then return 0 end
+  if not n.head or not n.glue_set then return 0 end
   w, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n.head)
   w1, _, _ = node.dimensions(n.glue_set, n.glue_sign, n.glue_order, n)
   return w
