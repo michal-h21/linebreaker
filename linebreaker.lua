@@ -1,3 +1,11 @@
+--  linebreaker.lua
+-- 
+--  (c) Michal Hoftich <michal.h21@gmail.com>
+-- 
+--  This program can be redistributed and/or modified under the terms
+--  of the LaTeX Project Public License Distributed from CTAN archives
+--  in directory macros/latex/base/lppl.txt.
+
 local linebreaker = {}
 
 local hlist_id = node.id "hlist"
