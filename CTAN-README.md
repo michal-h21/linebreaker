@@ -14,6 +14,8 @@ with the lowest badness.
 
 ## License
 
+Author: Michal Hoftich <michal.h21@gmail.com>
+
 Permission is granted to copy, distribute and/or modify this software
 under the terms of the LaTeX Project Public License, version 1.3.
 
