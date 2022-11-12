@@ -30,7 +30,7 @@ end
 linebreaker.debug = false
 
 -- max allowed value of tolerance
-linebreaker.max_tolerance = 9999 
+linebreaker.max_tolerance = 8189 -- maximal possible value of tolerance (thanks to Jan Šustek for pointing that out)
 -- maximal allowed emergencystretch
 linebreaker.max_emergencystretch = tex.sp("3em")
 -- line breaking function is customizable
