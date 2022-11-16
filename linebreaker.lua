@@ -51,6 +51,9 @@ linebreaker.previous_points = linebreaker.vertical_point / linebreaker.boxsize
 linebreaker.width_factor = 1.5
 -- will be linebreaker active?
 linebreaker.active = true
+
+-- use cubic method for tolerance calculation
+linebreaker.use_cubic = false
 -- return array with default parameters
 function linebreaker.parameters()
 	return {} 
@@ -152,9 +155,23 @@ local function glue_calc(n, sign,set)
 end
 
 
+local function cube_root(num)
+  return num ^(1/3)
+end
+
+
 -- calculate new tolerance
+local function calc_tolerance_cubic(previous, step)
+  local previous = previous or tex.tolerance
+  local max_cycles = linebreaker.max_cycles
+  local max_tolerance = linebreaker.max_tolerance 
+  local new = 100 * (cube_root(previous / 100) + (cube_root(max_tolerance/100) - cube_root(previous/100)) * (step/max_cycles))^3
+  -- local new =  previous + (max_tolerance / max_cycles)-- + math.sqrt(previous * 4)
+  return (new < max_tolerance) and new or max_tolerance
+end
+
 -- max_tolerance / max_cycles is added to the current tolerance value
-local function calc_tolerance(previous)
+local function calc_tolerance(previous, step)
   local previous = previous or tex.tolerance
   local max_cycles = linebreaker.max_cycles
   local max_tolerance = linebreaker.max_tolerance 
@@ -348,7 +365,9 @@ end
 
 -- try to linebreak current paragraph with increasing tolerance and
 -- emergencystretch
-function linebreaker.best_solution(par, parameters)
+function linebreaker.best_solution(par, parameters, step)
+  -- step is used in the tolerance calculation
+  local step = (step or 0) + 1
   -- save current node list, because call to the linebreaker modifies it
   -- and we wouldn't be able to run it multiple times
   local head = node.copy_list(par)
@@ -381,9 +400,14 @@ function linebreaker.best_solution(par, parameters)
   params.badness =  badness
   if badness > 0 then
     -- calc new value of tolerance
-    local tolerance = calc_tolerance(params.tolerance) -- or 10000 
+    local tolerance
+    if linebreaker.use_cubic then
+      tolerance = calc_tolerance_cubic(params.tolerance, step) -- or 10000 
+    else
+      tolerance = calc_tolerance(params.tolerance, step) -- or 10000 
+    end
     -- save tolerance to newparams so this value will be used in next run
-    newparams.tolerance = tolerance 
+    newparams.tolerance = math.floor(tolerance)
     newparams.emergencystretch = (params.emergencystretch or 0) + linebreaker.max_emergencystretch / linebreaker.max_cycles
     table.insert(parameters, newparams)
     -- run linebreaker again
