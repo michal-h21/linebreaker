@@ -160,7 +160,7 @@ local function cube_root(num)
 end
 
 
--- calculate new tolerance
+-- calculate new tolerance using method suggested by Jan Šustek
 local function calc_tolerance_cubic(previous, step)
   local previous = previous or tex.tolerance
   local max_cycles = linebreaker.max_cycles
