@@ -23,6 +23,7 @@ linebreaker-doc.pdf: linebreaker-doc.tex linebreaker.sty linebreaker.lua
 	latexmk -pdf -pdflatex='lualatex "\def\version{${VERSION}}\def\gitdate{${DATE}}\input{%S}"' $<
 
 build: linebreaker-doc.pdf
+	git fetch --tags
 	rm -rf build
 	mkdir -p build/linebreaker
 	cp linebreaker.sty linebreaker.lua linebreaker-doc.tex linebreaker-doc.pdf build/linebreaker
