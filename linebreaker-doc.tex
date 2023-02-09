@@ -142,7 +142,7 @@ Maximal allowed value of \verb|tolerance|.
 
 \begin{function}{cubic}
 Use cubic method for the \verb|tolerance| calculation. By default, \verb|tolerance| is calculated
-using a linear method.
+using a linear method, with constant steps. With the cubic method, each step is larger than the previous.
 \end{function}
 
 \begin{function}{debug}
@@ -194,6 +194,7 @@ under the terms of the LaTeX Project Public License, version 1.3.
   \item[v0.1b, ???]\hfill
     \begin{itemize}
       \item Set maximal value of tolerance to 8189, bigger value doesn't have any effect.
+      \item Added \verb|cubic| method for calculating tolerance.
     \end{itemize}
   \item[v0.1a, 2022-03-12]\hfill
 
