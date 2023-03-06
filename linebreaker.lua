@@ -56,7 +56,33 @@ linebreaker.active = true
 linebreaker.use_cubic = false
 -- return array with default parameters
 function linebreaker.parameters()
-	return {} 
+	return {
+    pardir = tex.pardir
+    ,pretolerance = tex.pretolerance
+    ,tracingparagraphs=tex.tracingparagraphs
+    ,tolerance=tex.tolerance
+    ,looseness=tex.looseness
+    ,hyphenpenalty=tex.hyphenpenalty
+    ,exhyphenpenalty=tex.exhyphenpenalty
+    ,pdfadjustspacing=tex.pdfadjustspacing
+    ,adjdemerits=tex.adjdemerits
+    ,pdfprotrudechars=tex.pdfprotrudechars
+    ,linepenalty=tex.linepenalty
+    ,lastlinefit=tex.lastlinefit
+    ,doublehyphendemerits=tex.doublehyphendemerits
+    ,finalhyphendemerits=tex.finalhyphendemerits
+    ,hangafter=tex.hangafter
+    ,interlinepenalty=tex.interlinepenalty
+    ,clubpenalty=tex.clubpenalty
+    ,widowpenalty=tex.widowpenalty
+    ,brokenpenalty=tex.brokenpenalty
+    ,emergencystretch=tex.emergencystretch
+    ,hangindent=tex.hangindent
+    ,hsize=tex.hsize
+    ,leftskip=tex.leftskip
+    ,rightskip=tex.rightskip
+    ,parshape=tex.parshape
+  } 
 end
 
 -- diagnostic function for traversing nodes returned by linebreaking
