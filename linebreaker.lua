@@ -406,7 +406,7 @@ function linebreaker.best_solution(par, parameters, step)
   local params = parameters[#parameters]	-- newest parameters are last in the
   -- table that will be used in recursive invocations of this function
   -- it holds updated parameters
-  local newparams =  {}
+  local newparams =  linebreaker.parameters()
   -- this value is set by hpack_quality callback that is executed by
   -- tex.linebreak when overflow or underflow happens
   linebreaker.badness = 0
@@ -474,16 +474,17 @@ local function fix_nest(info)
   tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
 end
 
+
 -- test whether the current overfull box message occurs inside our linebreaker function
 local is_inside_linebreaker = false
 function linebreaker.linebreak(head,is_display)
+  local parameters = linebreaker.parameters()
   -- we can disable linebreaker processing
   if linebreaker.active == false then
-    local newhead, info =  linebreaker.breaker(head)
+    local newhead, info =  linebreaker.breaker(head, parameters)
     fix_nest(info)
     return newhead
   end
-  local parameters = linebreaker.parameters()
   is_inside_linebreaker = true
   local newhead, info = linebreaker.best_solution(head, {parameters}) 
   is_inside_linebreaker = false
