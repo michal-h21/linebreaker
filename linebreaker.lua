@@ -160,8 +160,14 @@ local function find_best(params)
 		end
 	end
 	linebreaker.debug_print "best solution"
+  local ignored_types = {userdata=true, table = true}
 	for k,v in pairs(n) do 
-		linebreaker.debug_print(k,v)
+    -- we must ignore some properties in the params table,
+    -- as they produce errors when used in debug_print,
+    -- and they are not interesting for debugging anyway
+    if not ignored_types[type(v)]  then
+      linebreaker.debug_print(k,v)
+    end
 	end
 	return n
 end
