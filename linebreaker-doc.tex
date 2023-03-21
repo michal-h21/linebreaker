@@ -191,7 +191,11 @@ under the terms of the LaTeX Project Public License, version 1.3.
 \section{Changes}
 
 \begin{description}
-  \item[v0.1b, 2023-03-06]\hfill
+  \item[v0.1c, 2023-03-21]\hfill
+    \begin{itemize}
+      \item Pass default parameters to all calls of \verb|tex.linebreak|, in order to support Bidi text in all instances.
+    \end{itemize}
+  \item[v0.1b, 2023-03-08]\hfill
     \begin{itemize}
       \item Set maximal value of tolerance to 8189, bigger value doesn't have any effect.
       \item Added \verb|cubic| method for calculating tolerance.

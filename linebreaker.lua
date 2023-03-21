@@ -160,8 +160,14 @@ local function find_best(params)
 		end
 	end
 	linebreaker.debug_print "best solution"
+  local ignored_types = {userdata=true, table = true}
 	for k,v in pairs(n) do 
-		linebreaker.debug_print(k,v)
+    -- we must ignore some properties in the params table,
+    -- as they produce errors when used in debug_print,
+    -- and they are not interesting for debugging anyway
+    if not ignored_types[type(v)]  then
+      linebreaker.debug_print(k,v)
+    end
 	end
 	return n
 end
@@ -406,7 +412,7 @@ function linebreaker.best_solution(par, parameters, step)
   local params = parameters[#parameters]	-- newest parameters are last in the
   -- table that will be used in recursive invocations of this function
   -- it holds updated parameters
-  local newparams =  {}
+  local newparams =  linebreaker.parameters()
   -- this value is set by hpack_quality callback that is executed by
   -- tex.linebreak when overflow or underflow happens
   linebreaker.badness = 0
@@ -474,16 +480,17 @@ local function fix_nest(info)
   tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
 end
 
+
 -- test whether the current overfull box message occurs inside our linebreaker function
 local is_inside_linebreaker = false
 function linebreaker.linebreak(head,is_display)
+  local parameters = linebreaker.parameters()
   -- we can disable linebreaker processing
   if linebreaker.active == false then
-    local newhead, info =  linebreaker.breaker(head)
+    local newhead, info =  linebreaker.breaker(head, parameters)
     fix_nest(info)
     return newhead
   end
-  local parameters = linebreaker.parameters()
   is_inside_linebreaker = true
   local newhead, info = linebreaker.best_solution(head, {parameters}) 
   is_inside_linebreaker = false
