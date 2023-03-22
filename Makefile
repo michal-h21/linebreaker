@@ -29,6 +29,7 @@ build: linebreaker-doc.pdf
 	cp linebreaker.sty linebreaker.lua linebreaker-doc.tex linebreaker-doc.pdf build/linebreaker
 	echo "#The Linebreaker package, version ${VERSION} (${DATE})" > build/linebreaker/README.md
 	cat CTAN-README.md >> build/linebreaker/README.md
+	@cat linebreaker.sty | sed -e "s/{{version}}/${VERSION}/" | sed -e "s/{{date}}/${DATE}/" > build/linebreaker/linebreaker.sty
 	cd build && zip -r linebreaker.zip linebreaker
 
 .PHONY: build
