@@ -106,7 +106,12 @@ local utfchar = unicode.utf8.char
 
 local getchar = function(n)
   local t = {}
-  local xchar = font_identifiers[n.font].characters[n.char].unicode
+  if not n.font or not n.char then return "." end
+  local characters = font_identifiers[n.font].characters
+  if not characters then return "." end
+  local char_info = characters[n.char]
+  if not char_info then return "." end
+  local xchar = char_info.unicode
 
   if type(xchar) == "table" then
     for k,v in pairs(xchar) do
@@ -501,7 +506,9 @@ end
 function linebreaker.hpack_quality(incl, detail, head, first, last)
   if not is_inside_linebreaker then
     local detail_msg = incl=="overfull" and "overflow" or "badness"
-    linebreaker.debug_print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
+    if linebreaker.debug then -- I use thiscondition because we don't want to execute the get_text function unnecessarily, as it is quite slow
+      linebreaker.debug_print( incl .. " box at lines: " .. first .." -- " .. last ..". " .. detail_msg .. ": " .. detail .."\n text:" .. get_text(head) )
+    end
   end
   linebreaker.badness = (linebreaker.badness or 0) + detail
 end
