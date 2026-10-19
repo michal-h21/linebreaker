@@ -487,14 +487,7 @@ end
 
 local function get_direction(head)
   -- try to find an actual text direction of the current paragraph
-  local dir = tex.pardir
-  for n in node.traverse(head) do
-    -- the direction is set on the local_par node
-    if n.id == local_par_id then
-      return n.dir
-    end
-  end
-  return dir
+  return head.dir or tex.dir
 end
 
 local function fix_nest(info)
