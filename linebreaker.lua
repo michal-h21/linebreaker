@@ -12,6 +12,8 @@ local hlist_id = node.id "hlist"
 local glyph_id = node.id "glyph"
 local glue_id = node.id "glue"
 local vlist_id = node.id "vlist"
+local local_par_id = node.id "local_par"
+
 local maxval = 0x10FFFF
 
 local fonts = fonts or {}
@@ -55,9 +57,12 @@ linebreaker.active = true
 -- use cubic method for tolerance calculation
 linebreaker.use_cubic = false
 -- return array with default parameters
-function linebreaker.parameters()
+function linebreaker.parameters(parameters)
+  local parameters = parameters or {}
 	return {
-    pardir = tex.pardir
+    -- we try to find a current pardir from a loca_par node inside the paragraph node list
+    -- tex.pardir is only a backup value
+    pardir = parameters.pardir or tex.pardir
     ,pretolerance = tex.pretolerance
     ,tracingparagraphs=tex.tracingparagraphs
     ,tolerance=tex.tolerance
@@ -417,7 +422,7 @@ function linebreaker.best_solution(par, parameters, step)
   local params = parameters[#parameters]	-- newest parameters are last in the
   -- table that will be used in recursive invocations of this function
   -- it holds updated parameters
-  local newparams =  linebreaker.parameters()
+  local newparams =  linebreaker.parameters(params)
   -- this value is set by hpack_quality callback that is executed by
   -- tex.linebreak when overflow or underflow happens
   linebreaker.badness = 0
@@ -480,6 +485,18 @@ local function glue_width(head)
   end
 end
 
+local function get_direction(head)
+  -- try to find an actual text direction of the current paragraph
+  local dir = tex.pardir
+  for n in node.traverse(head) do
+    -- the direction is set on the local_par node
+    if n.id == local_par_id then
+      return n.dir
+    end
+  end
+  return dir
+end
+
 local function fix_nest(info)
   tex.nest[tex.nest.ptr].prevdepth=info.prevdepth
   tex.nest[tex.nest.ptr].prevgraf=info.prevgraf
@@ -490,6 +507,7 @@ end
 local is_inside_linebreaker = false
 function linebreaker.linebreak(head,is_display)
   local parameters = linebreaker.parameters()
+  parameters.pardir = get_direction(head)
   -- we can disable linebreaker processing
   if linebreaker.active == false then
     local newhead, info =  linebreaker.breaker(head, parameters)
