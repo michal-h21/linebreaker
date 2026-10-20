@@ -486,8 +486,11 @@ local function glue_width(head)
 end
 
 local function get_direction(head)
-  -- try to find an actual text direction of the current paragraph
-  return head.dir or tex.dir
+  -- try to find an actual text direction of the current paragraph, but only if it starts wirh a local_par node
+  if head.id == local_par_id then
+    return head.dir
+  end
+  return tex.dir
 end
 
 local function fix_nest(info)
